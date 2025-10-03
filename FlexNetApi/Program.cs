@@ -1,4 +1,6 @@
 
+using FlexNet.API;
+
 namespace FlexNetBackend
 {
     public class Program
@@ -13,6 +15,9 @@ namespace FlexNetBackend
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Add dependency injection from other layers
+            builder.Services.AddAppDI(builder.Configuration);
 
             var app = builder.Build();
 
