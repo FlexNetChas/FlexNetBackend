@@ -3,15 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FlexNetApi", "FlexNetApi", "{01176230-51A3-FF06-0EE5-5E6EE4022326}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Api", "FlexNetApi\FlexNet.Api.csproj", "{F8CCB011-383B-40CF-870C-9F9907A3DE21}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Application", "FlexNet.Application\FlexNet.Application.csproj", "{18D36EBE-F84B-4BA9-8F31-401F19770934}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Domain", "FlexNet.Domain\FlexNet.Domain.csproj", "{F6233486-1ADC-4FAA-A020-D08AF8EA9309}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Infrastructure", "FlexNet.Infrastructure\FlexNet.Infrastructure.csproj", "{A06419DF-0774-421D-933E-0EC46E177E7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Api", "FlexNetApi\FlexNet.Api.csproj", "{55BC0830-B8A9-AA40-9B95-55973A5F1F85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,18 +21,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Debug|x64.Build.0 = Debug|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Debug|x86.Build.0 = Debug|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Release|x64.ActiveCfg = Release|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Release|x64.Build.0 = Release|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Release|x86.ActiveCfg = Release|Any CPU
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21}.Release|x86.Build.0 = Release|Any CPU
 		{18D36EBE-F84B-4BA9-8F31-401F19770934}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{18D36EBE-F84B-4BA9-8F31-401F19770934}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18D36EBE-F84B-4BA9-8F31-401F19770934}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -71,12 +57,21 @@ Global
 		{A06419DF-0774-421D-933E-0EC46E177E7E}.Release|x64.Build.0 = Release|Any CPU
 		{A06419DF-0774-421D-933E-0EC46E177E7E}.Release|x86.ActiveCfg = Release|Any CPU
 		{A06419DF-0774-421D-933E-0EC46E177E7E}.Release|x86.Build.0 = Release|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Debug|x64.Build.0 = Debug|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Debug|x86.Build.0 = Debug|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Release|x64.ActiveCfg = Release|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Release|x64.Build.0 = Release|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Release|x86.ActiveCfg = Release|Any CPU
+		{55BC0830-B8A9-AA40-9B95-55973A5F1F85}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{F8CCB011-383B-40CF-870C-9F9907A3DE21} = {01176230-51A3-FF06-0EE5-5E6EE4022326}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43B230C0-FFCC-4C55-B3F7-0E266B729439}
