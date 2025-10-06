@@ -1,7 +1,5 @@
 ﻿using FlexNet.Application;
 using FlexNet.Infrastructure;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace FlexNet.API
 {
