@@ -15,6 +15,10 @@
     <ProjectReference Include="..\FlexNet.Domain\FlexNet.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\Context\" />
+  </ItemGroup>
+
   <PropertyGroup>
 	  <TargetFramework>net8.0</TargetFramework>
 	  <ImplicitUsings>enable</ImplicitUsings>
