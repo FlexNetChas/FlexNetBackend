@@ -6,7 +6,8 @@ public class Avatar
    public int UserId { get; set; }
    public string Style { get; set; }
    public string Personality { get; set; }
-   public string Voice { get; set; }
+   public bool VoiceEnabled { get; set; }     
+   public string VoiceSelection { get; set; }
 
    public User? User { get; set; }
 }
