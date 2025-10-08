@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using FlexNet.Application.Interfaces;
 using FlexNet.Domain.Entities;
+using FlexNet.Application.Interfaces.IServices;
 
 namespace FlexNet.Api.Controllers;
 

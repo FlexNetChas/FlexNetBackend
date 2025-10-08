@@ -1,14 +1,15 @@
 ﻿using FlexNet.Domain.Entities;
 
-namespace FlexNet.Domain.Interfaces;
+namespace FlexNet.Application.Interfaces.IServices; 
 
-public interface IUserRepo
+public interface IUserService
 {
     Task<User?> GetByIdAsync(int id);
     Task<User?> GetByEmailAsync(string email);
     Task<IEnumerable<User>> GetAllAsync();
-    Task<User> AddAsync(User user);
+    Task<User> CreateAsync(User user);
     Task<User> UpdateAsync(User user);
     Task<bool> DeleteAsync(int id);
-    Task<bool> ExistsAsync(int id);
+    Task<bool> ValidatePasswordAsync(string email, string password);
+    Task<string> GenerateJwtTokenAsync(User user);
 }

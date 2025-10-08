@@ -1,6 +1,6 @@
-﻿using FlexNet.Application.Interfaces;
+﻿using FlexNet.Application.Interfaces.IRepositories;
+using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Domain.Entities;
-using FlexNet.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;

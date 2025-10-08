@@ -1,13 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using FlexNet.Infrastructure.Data;
-using FlexNet.Infrastructure.Repositories;
-using FlexNet.Domain.Interfaces;
-using FlexNet.Application.Interfaces;
-using FlexNet.Application.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using FlexNet.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,15 +45,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add Entity Framework
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Add Repositories
-builder.Services.AddScoped<IUserRepo, UserRepository>();
-
-// Add Services 
-builder.Services.AddScoped<IUserService, UserService>();
+// Add all layers through API layer
+builder.Services.AddAppDI(builder.Configuration);
 
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -115,4 +103,3 @@ app.MapControllers();
 
 
 app.Run();
-

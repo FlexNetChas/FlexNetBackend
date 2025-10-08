@@ -11,6 +11,9 @@ public class ApplicationDbContext : DbContext
 
     // DbSets
     public DbSet<User> Users { get; set; }
+    public DbSet<ChatSession> ChatSessions { get; set; }
+    public DbSet<Avatar> Avatars { get; set; }
+    public DbSet<UserDescription> UserDescriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,13 +51,75 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
         });
 
+        // Configure ChatSession entity
+        modelBuilder.Entity<ChatSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Summary)
+                .HasMaxLength(1000);
+
+            entity.Property(e => e.StartedTime)
+                .IsRequired();
+
+            entity.HasOne(e => e.User)
+                .WithMany(e => e.ChatSessions)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure Avatar entity
+        modelBuilder.Entity<Avatar>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Style)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Personality)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.VoiceSelection)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.HasOne(e => e.User)
+                .WithOne(e => e.Avatar)
+                .HasForeignKey<Avatar>(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure UserDescription entity
+        modelBuilder.Entity<UserDescription>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Gender)
+                .HasMaxLength(20);
+
+            entity.Property(e => e.Education)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Purpose)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.HasOne(e => e.User)
+                .WithOne(e => e.UserDescription)
+                .HasForeignKey<UserDescription>(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         // Seed data
         SeedData(modelBuilder);
     }
 
     private void SeedData(ModelBuilder modelBuilder)
     {
-        // A default admin user with static hash
+        // Seed a default admin user with static hash
         modelBuilder.Entity<User>().HasData(
             new User
             {

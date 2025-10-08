@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using FlexNet.Domain.Entities;
-using FlexNet.Domain.Interfaces;
+using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Infrastructure.Data;
 
 namespace FlexNet.Infrastructure.Repositories;
@@ -17,18 +17,27 @@ public class UserRepository : IUserRepo
     public async Task<User?> GetByIdAsync(int id)
     {
         return await _context.Users
+            .Include(u => u.Avatar)
+            .Include(u => u.UserDescription)
+            .Include(u => u.ChatSessions)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await _context.Users
+            .Include(u => u.Avatar)
+            .Include(u => u.UserDescription)
+            .Include(u => u.ChatSessions)
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
         return await _context.Users
+            .Include(u => u.Avatar)
+            .Include(u => u.UserDescription)
+            .Include(u => u.ChatSessions)
             .ToListAsync();
     }
 
