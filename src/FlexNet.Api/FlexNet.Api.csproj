@@ -19,10 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\FlexNet.Application\FlexNet.Application.csproj" />
     <ProjectReference Include="..\FlexNet.Infrastructure\FlexNet.Infrastructure.csproj" />
   </ItemGroup>
