@@ -1,21 +1,23 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using FlexNet.Application.Interfaces.IRepositories;
+using FlexNet.Infrastructure.Data;
+using FlexNet.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FlexNet.Infrastructure
+namespace FlexNet.Infrastructure;
+
+public static class DependencyInjection
 {
-    public static class DependencyInjection
+    public static IServiceCollection AddInfrastructureDI(this IServiceCollection services, IConfiguration configuration)
     {
-        public static IServiceCollection AddInfrastructureDI(
-            this IServiceCollection services,
-            IConfiguration configuration)
-        {
-            // Add entity framework, identity, and other infrastructure services here
+        // Add Entity Framework
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-            // Ex:
-            // services.AddDbContext<AppDbContext>(options =>
-            //     options.UseSqlServer(configuration.GetConnectionString("NetFlex-connection-string")));
+        // Add Repositories
+        services.AddScoped<IUserRepo, UserRepository>();
 
-            return services;
-        }
+        return services;
     }
 }
