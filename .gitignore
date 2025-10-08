@@ -12,3 +12,4 @@ obj/
 # Others
 *.log
 .idea/
+appsettings.Development.json
