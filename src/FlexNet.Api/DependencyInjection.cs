@@ -1,17 +1,20 @@
-﻿using FlexNet.Application;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using FlexNet.Application;
 using FlexNet.Infrastructure;
 
-namespace FlexNet.API
-{
-    public static class DependencyInjection
-    {
-        public static IServiceCollection AddAppDI(this IServiceCollection services, IConfiguration configuration)
-        {
-            services
-                .AddApplicationDI()
-                .AddInfrastructureDI(configuration);
+namespace FlexNet.Api;
 
-            return services;
-        }
+public static class DependencyInjection
+{
+    public static IServiceCollection AddAppDI(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddApplicationDI();
+
+        services.AddInfrastructureDI(configuration);
+
+        return services;
     }
 }
+
+

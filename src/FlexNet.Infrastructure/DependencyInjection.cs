@@ -1,25 +1,34 @@
-﻿using Azure.Identity;
+﻿using FlexNet.Application.Interfaces.IRepositories;
+using FlexNet.Infrastructure.Data;
+using FlexNet.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using FlexNet.Application.Interfaces;
 using FlexNet.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FlexNet.Infrastructure
-{
-    public static class DependencyInjection
-    {
-        public static IServiceCollection AddInfrastructureDI(
-            this IServiceCollection services,
-            IConfiguration configuration)
-        {
-            // Add entity framework, identity, and other infrastructure services here
+namespace FlexNet.Infrastructure;
 
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructureDI(this IServiceCollection services, IConfiguration configuration)
+    {
+        // Add Entity Framework
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+        // Add Repositories
+        services.AddScoped<IUserRepo, UserRepository>();
             // Ex:
             // services.AddDbContext<AppDbContext>(options =>
             //     options.UseSqlServer(configuration.GetConnectionString("NetFlex-connection-string")));
             services.AddScoped<IGuidanceService, GeminiGuidanceService>();
 
+        return services;
+    }
+}
             string vaultName = configuration["KEY_VAULT_NAME"] ?? Environment.GetEnvironmentVariable("KEY_VAULT_NAME");
             if (!string.IsNullOrWhiteSpace(vaultName))
             {
