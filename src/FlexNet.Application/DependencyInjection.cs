@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FlexNet.Application.UseCases;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FlexNet.Application
 {
@@ -7,6 +8,8 @@ namespace FlexNet.Application
         public static IServiceCollection AddApplicationDI(this IServiceCollection services)
         {
             // Registrera application services
+            services.AddScoped<SendCounsellingMessage>();
+
             return services;
         }
     }
