@@ -12,3 +12,8 @@ obj/
 # Others
 *.log
 .idea/
+
+# Migrations folder
+src/FlexNet.Infrastructure/Migrations/
+
+
