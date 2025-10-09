@@ -1,7 +1,4 @@
 using FlexNet.API;
-using FlexNet.Application.Interfaces;
-using FlexNet.Application.UseCases;
-using FlexNet.Infrastructure.Services;
 
 namespace FlexNetBackend
 {
@@ -20,9 +17,7 @@ namespace FlexNetBackend
 
             // Add dependency injection from other layers
             builder.Services.AddAppDI(builder.Configuration);
-            var geminiApiKey = builder.Configuration["Gemini:ApiKey"] ?? throw new InvalidOperationException("Gemini API key not configured");
-            builder.Services.AddScoped<IGuidanceService>(sp => new GeminiGuidanceService(geminiApiKey));
-            builder.Services.AddScoped<SendCounsellingMessage>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
