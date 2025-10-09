@@ -1,11 +1,12 @@
-﻿using FlexNet.Application.Interfaces.IRepositories;
-using FlexNet.Infrastructure.Data;
-using FlexNet.Infrastructure.Repositories;
-using Microsoft.EntityFrameworkCore;
-using Azure.Identity;
+﻿using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using FlexNet.Application.Interfaces;
+using FlexNet.Application.Interfaces.IRepositories;
+using FlexNet.Application.Interfaces.IServices;
+using FlexNet.Infrastructure.Data;
+using FlexNet.Infrastructure.Repositories;
 using FlexNet.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,7 +15,7 @@ namespace FlexNet.Infrastructure;
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureDI(
-        this IServiceCollection services, 
+        this IServiceCollection services,
         IConfiguration configuration)
     {
         // Add Entity Framework
@@ -24,23 +25,23 @@ public static class DependencyInjection
 
         // Add Repositories
         services.AddScoped<IUserRepo, UserRepository>();
-            // Ex:
-            // services.AddDbContext<AppDbContext>(options =>
-            //     options.UseSqlServer(configuration.GetConnectionString("NetFlex-connection-string")));
-            services.AddScoped<IGuidanceService, GeminiGuidanceService>();
+
+        // Add Guidance service
+        services.AddScoped<IGuidanceService, GeminiGuidanceService>();
+
+        // Add Key Vault + API Key Provider
+        string vaultName = configuration["KEY_VAULT_NAME"]
+                           ?? Environment.GetEnvironmentVariable("KEY_VAULT_NAME");
+
+        if (string.IsNullOrWhiteSpace(vaultName))
+            throw new InvalidOperationException(
+                "Missing KEY_VAULT_NAME configuration. Please set it in your appsettings or environment variables.");
+
+        var vaultUri = new Uri($"https://{vaultName}.vault.azure.net");
+        services.AddSingleton(new SecretClient(vaultUri, new DefaultAzureCredential()));
+        services.AddMemoryCache();
+        services.AddSingleton<IApiKeyProvider, KeyVaultApiKeyProvider>();
 
         return services;
-    }
-}
-            string vaultName = configuration["KEY_VAULT_NAME"] ?? Environment.GetEnvironmentVariable("KEY_VAULT_NAME");
-            if (!string.IsNullOrWhiteSpace(vaultName))
-            {
-                var vaultUri = new Uri($"https://{vaultName}.vault.azure.net");
-                services.AddSingleton(new SecretClient(vaultUri, new DefaultAzureCredential()));
-                services.AddMemoryCache();
-                services.AddSingleton<IApiKeyProvider, KeyVaultApiKeyProvider>();
-            }
-            return services;
-        }
     }
 }
