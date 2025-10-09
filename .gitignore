@@ -14,5 +14,5 @@ obj/
 .idea/
 
 # Migrations folder
-.vs/migration
+*/Migrations/
 
