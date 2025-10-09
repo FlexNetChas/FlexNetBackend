@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using FlexNet.Domain.Entities;
+using FlexNet.Infrastructure.Data.Configuration;
 
 namespace FlexNet.Infrastructure.Data;
 
@@ -19,99 +20,12 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure User entity
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Email).IsUnique();
-
-            entity.Property(e => e.FirstName)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(e => e.LastName)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(e => e.Email)
-                .IsRequired()
-                .HasMaxLength(255);
-
-            entity.Property(e => e.Role)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            entity.Property(e => e.PasswordHash)
-                .IsRequired();
-
-            entity.Property(e => e.CreatedAt)
-                .IsRequired();
-
-            entity.Property(e => e.IsActive)
-                .IsRequired();
-        });
-
-        // Configure ChatSession entity
-        modelBuilder.Entity<ChatSession>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-
-            entity.Property(e => e.Summary)
-                .HasMaxLength(1000);
-
-            entity.Property(e => e.StartedTime)
-                .IsRequired();
-
-            entity.HasOne(e => e.User)
-                .WithMany(e => e.ChatSessions)
-                .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // Configure Avatar entity
-        modelBuilder.Entity<Avatar>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-
-            entity.Property(e => e.Style)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(e => e.Personality)
-                .IsRequired()
-                .HasMaxLength(200);
-
-            entity.Property(e => e.VoiceSelection)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.HasOne(e => e.User)
-                .WithOne(e => e.Avatar)
-                .HasForeignKey<Avatar>(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // Configure UserDescription entity
-        modelBuilder.Entity<UserDescription>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-
-            entity.Property(e => e.Gender)
-                .HasMaxLength(20);
-
-            entity.Property(e => e.Education)
-                .IsRequired()
-                .HasMaxLength(200);
-
-            entity.Property(e => e.Purpose)
-                .IsRequired()
-                .HasMaxLength(500);
-
-            entity.HasOne(e => e.User)
-                .WithOne(e => e.UserDescription)
-                .HasForeignKey<UserDescription>(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
+        // Apply fluent API config 
+        modelBuilder.ApplyConfiguration(new AvatarConfiguration());
+        modelBuilder.ApplyConfiguration(new ChatMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new ChatSessionConfiguration());
+        modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new UserDescriptionConfiguration());
 
         // Seed data
         SeedData(modelBuilder);
@@ -119,6 +33,7 @@ public class ApplicationDbContext : DbContext
 
     private void SeedData(ModelBuilder modelBuilder)
     {
+
         // Seed a default admin user with static hash
         modelBuilder.Entity<User>().HasData(
             new User

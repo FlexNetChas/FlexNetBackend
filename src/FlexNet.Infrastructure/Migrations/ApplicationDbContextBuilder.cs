@@ -1,14 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FlexNet.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace FlexNet.Infrastructure.Data;
+namespace FlexNet.Infrastructure.Migrations;
 
 public class ApplicationDbContextBuilder : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
     public ApplicationDbContext CreateDbContext(string[] args)
     {
+
+
+
+
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=FlexNetChatManagement_Dev;Trusted_Connection=true;MultipleActiveResultSets=true");
+        optionsBuilder.UseSqlServer("DefaultConnection");
 
         return new ApplicationDbContext(optionsBuilder.Options);
     }

@@ -12,3 +12,7 @@ obj/
 # Others
 *.log
 .idea/
+
+# Migrations folder
+.vs/migration
+
