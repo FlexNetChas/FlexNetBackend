@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Services;
+using FlexNet.Application.Interfaces.IRepositories;
 
 namespace FlexNet.Application
 {
