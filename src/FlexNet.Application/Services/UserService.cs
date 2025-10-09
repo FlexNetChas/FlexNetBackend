@@ -72,16 +72,17 @@ public class UserService : IUserService
         var expiryHours = int.Parse(jwtSettings["ExpiryInHours"] ?? "24");
 
         var tokenHandler = new JwtSecurityTokenHandler();
+        tokenHandler.OutboundClaimTypeMap.Clear(); // Ensure claim types get short names in token
         var key = Encoding.UTF8.GetBytes(secretKey);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),      // "sub"
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),            // "email"
+                new Claim(JwtRegisteredClaimNames.Name, $"{user.FirstName} {user.LastName}"), // "name"
+                new Claim("role", user.Role)  // "role" (custom claim)
             }),
             Expires = DateTime.UtcNow.AddHours(expiryHours),
             Issuer = issuer,
