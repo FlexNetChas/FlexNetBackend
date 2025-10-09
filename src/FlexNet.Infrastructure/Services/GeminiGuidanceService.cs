@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FlexNet.Application.Interfaces;
+using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using Mscc.GenerativeAI;
 
