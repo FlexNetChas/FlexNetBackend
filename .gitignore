@@ -14,5 +14,6 @@ obj/
 .idea/
 
 # Migrations folder
-*/Migrations/
+src/FlexNet.Infrastructure/Migrations/
+
 
