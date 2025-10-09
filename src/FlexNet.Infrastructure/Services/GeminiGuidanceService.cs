@@ -11,11 +11,11 @@ namespace FlexNet.Infrastructure.Services
 {
     public class GeminiGuidanceService : IGuidanceService
     {
-        private readonly string _apiKey;
+        private readonly IApiKeyProvider _apiKeyProvider;
 
-        public GeminiGuidanceService(string apiKey)
+        public GeminiGuidanceService(IApiKeyProvider apiKeyProvider)
         {
-            _apiKey = apiKey ?? throw new ArgumentNullException(nameof(apiKey));
+            _apiKeyProvider = apiKeyProvider ?? throw new ArgumentNullException(nameof(apiKeyProvider));
         }
 
         public async Task<string> GetGuidanceAsync(
@@ -23,7 +23,8 @@ namespace FlexNet.Infrastructure.Services
             IEnumerable<ConversationMessage> conversationHistory,
             StudentContext studentContext)
         {
-            var model = new GenerativeModel() { ApiKey = _apiKey };
+            var apiKey = await _apiKeyProvider.GetApiKeyAsync();
+            var model = new GenerativeModel() { ApiKey = apiKey };
             var response = await model.GenerateContent(userMessage);
             return response.Text;
         }
