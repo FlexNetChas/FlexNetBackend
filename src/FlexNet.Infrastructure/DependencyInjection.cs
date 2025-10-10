@@ -37,7 +37,7 @@ public static class DependencyInjection
             return new GuidanceService(geminiService, logger);
         });
         // Add Key Vault + API Key Provider
-string vaultName = configuration["KeyVault:VaultName"];
+string? vaultName = configuration["KeyVault:VaultName"];
 
 if (string.IsNullOrWhiteSpace(vaultName))
     throw new InvalidOperationException(
