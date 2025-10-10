@@ -1,16 +1,20 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FlexNet.Application.UseCases;
+using Microsoft.Extensions.DependencyInjection;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Services;
+using Microsoft.Extensions.Logging;
 
-namespace FlexNet.Application;
 
-public static class DependencyInjection
+namespace FlexNet.Application
 {
-    public static IServiceCollection AddApplicationDI(this IServiceCollection services)
+    public static class DependencyInjection
     {
-        // Add Services
-        services.AddScoped<IUserService, UserService>();
-
-        return services;
+        public static IServiceCollection AddApplicationDI(this IServiceCollection services)
+        {
+            // Registrera application services
+            services.AddScoped<SendCounsellingMessage>();
+    
+            return services;
+        }
     }
 }
