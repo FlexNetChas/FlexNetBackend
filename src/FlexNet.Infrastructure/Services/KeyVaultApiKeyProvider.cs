@@ -1,13 +1,11 @@
-﻿using System;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure;
+﻿using Azure;
 using Azure.Security.KeyVault.Secrets;
 using FlexNet.Application.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
+namespace FlexNet.Infrastructure.Services;
 
 internal sealed class KeyVaultApiKeyProvider : IApiKeyProvider
 {
@@ -27,7 +25,7 @@ internal sealed class KeyVaultApiKeyProvider : IApiKeyProvider
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _secretName = config["KEY_VAULT_SECRET_NAME"] ?? Environment.GetEnvironmentVariable("KEY_VAULT_SECRET_NAME");
+        _secretName = config["KeyVault:SecretName"];
         _logger.LogInformation("Resolved KEY_VAULT_SECRET_NAME: {SecretName}", _secretName ?? "<null>");
     }
 
