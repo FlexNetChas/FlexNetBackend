@@ -33,7 +33,6 @@ public class ApplicationDbContext : DbContext
 
     private void SeedData(ModelBuilder modelBuilder)
     {
-
         // Seed a default admin user with static hash
         modelBuilder.Entity<User>().HasData(
             new User
