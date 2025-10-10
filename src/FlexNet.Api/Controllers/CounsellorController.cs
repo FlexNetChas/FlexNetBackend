@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Mscc.GenerativeAI;
-using System.Threading.Tasks; // Add this for Task
+using System.Threading.Tasks;
+using FlexNet.Application.Models; // Add this for Task
 
 using FlexNet.Application.UseCases;
 
