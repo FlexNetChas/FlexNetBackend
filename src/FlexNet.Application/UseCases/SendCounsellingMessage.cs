@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
+using FlexNet.Application.Models.Records;
 
 namespace FlexNet.Application.UseCases
 {
@@ -20,20 +22,37 @@ namespace FlexNet.Application.UseCases
         public async Task<SendMessageResponse> ExecuteAsync(SendMessageRequest request)
         {
             var conversationHistory = Enumerable.Empty<ConversationMessage>();
-            var studentContext = new StudentContext(Age: request.Age ?? 16, Gender: null, Education: null, Purpose: null);
-            var guidance = await _guidanceService.GetGuidanceAsync(request.Message, conversationHistory, studentContext);
-            return new SendMessageResponse { Reply = guidance };
+            var studentContext =
+                new StudentContext(Age: request.Age ?? 16, Gender: null, Education: null, Purpose: null);
+           var result = await _guidanceService.GetGuidanceAsync(request.Message, conversationHistory, studentContext);
+
+           if (result.IsSuccess)
+           {
+               return new SendMessageResponse
+               {
+                   Reply = result.Content,
+                   IsSuccess = true,
+                   ErrorCode = null,
+                   CanRetry = false,
+                   RetryAfter = null
+               };
+               
+           }
+           else
+           {
+               return new SendMessageResponse
+               {
+                   Reply = result.Error?.Message ?? "An error occurred",
+                   IsSuccess = false,
+                   ErrorCode = result.Error?.ErrorCode,
+                   CanRetry = result.Error?.CanRetry ?? false,
+                   RetryAfter = result.Error?.RetryAfter
+               };
+           }
         }
     }
 
-    public class SendMessageRequest
-    {
-        public string Message { get; set; } = string.Empty;
-        public int? Age { get; set; }  // Optional for now
-    }
 
-    public class SendMessageResponse
-    {
-        public string Reply { get; set; } = string.Empty;
-    }
-}
+
+
+} 
