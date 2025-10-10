@@ -37,12 +37,14 @@ public static class DependencyInjection
             return new GuidanceService(geminiService, logger);
         });
         // Add Key Vault + API Key Provider
-        string vaultName = configuration["KEY_VAULT_NAME"]
-                           ?? Environment.GetEnvironmentVariable("KEY_VAULT_NAME");
+string vaultName = configuration["KeyVault:VaultName"];
 
-        if (string.IsNullOrWhiteSpace(vaultName))
-            throw new InvalidOperationException(
-                "Missing KEY_VAULT_NAME configuration. Please set it in your appsettings or environment variables.");
+if (string.IsNullOrWhiteSpace(vaultName))
+    throw new InvalidOperationException(
+        "Missing KeyVault:VaultName configuration. " +
+        "For local development: " +
+        "1) Run 'az login' to authenticate with Azure, " +
+        "2) Run 'dotnet user-secrets set \"KeyVault:VaultName\" \"your-vault-name\"' in the Api project folder.");
 
         var vaultUri = new Uri($"https://{vaultName}.vault.azure.net");
         services.AddSingleton(new SecretClient(vaultUri, new DefaultAzureCredential()));
