@@ -3,12 +3,14 @@ using Azure.Security.KeyVault.Secrets;
 using FlexNet.Application.Interfaces;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
+using FlexNet.Application.Services;
 using FlexNet.Infrastructure.Data;
 using FlexNet.Infrastructure.Repositories;
 using FlexNet.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Infrastructure;
 
@@ -27,8 +29,13 @@ public static class DependencyInjection
         services.AddScoped<IUserRepo, UserRepository>();
 
         // Add Guidance service
-        services.AddScoped<IGuidanceService, GeminiGuidanceService>();
-
+        services.AddScoped<GeminiGuidanceService>();
+        services.AddScoped<IGuidanceService>(provider =>
+        {
+            var geminiService = provider.GetRequiredService<GeminiGuidanceService>();
+            var logger = provider.GetRequiredService<ILogger<GuidanceService>>();
+            return new GuidanceService(geminiService, logger);
+        });
         // Add Key Vault + API Key Provider
         string vaultName = configuration["KEY_VAULT_NAME"]
                            ?? Environment.GetEnvironmentVariable("KEY_VAULT_NAME");
