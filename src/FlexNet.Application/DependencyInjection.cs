@@ -2,7 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Services;
-using FlexNet.Application.Interfaces.IRepositories;
+using Microsoft.Extensions.Logging;
+
 
 namespace FlexNet.Application
 {
@@ -12,7 +13,7 @@ namespace FlexNet.Application
         {
             // Registrera application services
             services.AddScoped<SendCounsellingMessage>();
-
+    
             return services;
         }
     }
