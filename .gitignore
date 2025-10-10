@@ -13,7 +13,6 @@ obj/
 *.log
 .idea/
 appsettings.Development.json
-.idea/
 
 # Migrations folder
 src/FlexNet.Infrastructure/Migrations/
