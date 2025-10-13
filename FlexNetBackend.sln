@@ -1,9 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNetBackend", "FlexNetBackend.csproj", "{D6A6150B-355A-40C3-BE4C-86ECBF6FBFF5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Infrastructure.Tests", "tests\FlexNet.Infrastructure.Tests\FlexNet.Infrastructure.Tests.csproj", "{BDF98BA0-A8C2-4DA0-84D6-A9D5891B6C2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Application.Tests", "tests\FlexNet.Application.Tests\FlexNet.Application.Tests.csproj", "{43A1845E-E9CA-4ED6-B151-367B9464E25B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Api", "src\FlexNet.Api\FlexNet.Api.csproj", "{404CEABD-04EB-A331-2B3B-78C8B72C3CBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Application", "src\FlexNet.Application\FlexNet.Application.csproj", "{736883AE-C725-B7F7-399A-85D1666E294A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Domain", "src\FlexNet.Domain\FlexNet.Domain.csproj", "{FBB226F3-643A-A236-8260-F62EB58B0373}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexNet.Infrastructure", "src\FlexNet.Infrastructure\FlexNet.Infrastructure.csproj", "{BD23CC16-BA7A-EDB8-6555-14BF4BB6D1A2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +28,30 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D6A6150B-355A-40C3-BE4C-86ECBF6FBFF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D6A6150B-355A-40C3-BE4C-86ECBF6FBFF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D6A6150B-355A-40C3-BE4C-86ECBF6FBFF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D6A6150B-355A-40C3-BE4C-86ECBF6FBFF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDF98BA0-A8C2-4DA0-84D6-A9D5891B6C2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDF98BA0-A8C2-4DA0-84D6-A9D5891B6C2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDF98BA0-A8C2-4DA0-84D6-A9D5891B6C2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDF98BA0-A8C2-4DA0-84D6-A9D5891B6C2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43A1845E-E9CA-4ED6-B151-367B9464E25B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43A1845E-E9CA-4ED6-B151-367B9464E25B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43A1845E-E9CA-4ED6-B151-367B9464E25B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43A1845E-E9CA-4ED6-B151-367B9464E25B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{404CEABD-04EB-A331-2B3B-78C8B72C3CBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{404CEABD-04EB-A331-2B3B-78C8B72C3CBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{404CEABD-04EB-A331-2B3B-78C8B72C3CBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{404CEABD-04EB-A331-2B3B-78C8B72C3CBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{736883AE-C725-B7F7-399A-85D1666E294A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{736883AE-C725-B7F7-399A-85D1666E294A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{736883AE-C725-B7F7-399A-85D1666E294A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{736883AE-C725-B7F7-399A-85D1666E294A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBB226F3-643A-A236-8260-F62EB58B0373}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBB226F3-643A-A236-8260-F62EB58B0373}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBB226F3-643A-A236-8260-F62EB58B0373}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBB226F3-643A-A236-8260-F62EB58B0373}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD23CC16-BA7A-EDB8-6555-14BF4BB6D1A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD23CC16-BA7A-EDB8-6555-14BF4BB6D1A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD23CC16-BA7A-EDB8-6555-14BF4BB6D1A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD23CC16-BA7A-EDB8-6555-14BF4BB6D1A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
