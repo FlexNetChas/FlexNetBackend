@@ -11,9 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using FlexNet.Infrastructure.Data;
-using FlexNet.Infrastructure.Repositories;
-using FlexNet.Application.Interfaces.IRepositories;
+using FlexNet.Infrastructure.Security;
 
 namespace FlexNet.Infrastructure;
 
@@ -28,6 +26,8 @@ public static class DependencyInjection
         // Add Repositories
         services.AddScoped<IUserRepo, UserRepository>();
         services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
+        services.AddScoped<IJwtGenerator, JwtGenerator>();
+        
 
         // Add Guidance service
         services.AddScoped<GeminiGuidanceService>();
