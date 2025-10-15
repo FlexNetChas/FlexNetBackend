@@ -15,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ChatSession> ChatSessions { get; set; }
     public DbSet<Avatar> Avatars { get; set; }
     public DbSet<UserDescription> UserDescriptions { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +27,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ChatSessionConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new UserDescriptionConfiguration());
+        modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
 
         // Seed data
         SeedData(modelBuilder);
