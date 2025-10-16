@@ -12,12 +12,11 @@ namespace FlexNet.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepo _userRepository;
-    private readonly IConfiguration _configuration;
-
-    public UserService(IUserRepo userRepository, IConfiguration configuration)
+    private readonly IJwtGenerator _jwtGenerator;
+    public UserService(IUserRepo userRepository,  IJwtGenerator jwtGenerator)
     {
         _userRepository = userRepository;
-        _configuration = configuration;
+        _jwtGenerator = jwtGenerator;
     }
 
     public async Task<User?> GetByIdAsync(int id)
@@ -65,32 +64,8 @@ public class UserService : IUserService
 
     public Task<string> GenerateJwtTokenAsync(User user)
     {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not found");
-        var issuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("JWT Issuer not found");
-        var audience = jwtSettings["Audience"] ?? throw new InvalidOperationException("JWT Audience not found");
-        var expiryHours = int.Parse(jwtSettings["ExpiryInHours"] ?? "24");
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        tokenHandler.OutboundClaimTypeMap.Clear(); // Ensure claim types get short names in token
-        var key = Encoding.UTF8.GetBytes(secretKey);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),      // "sub"
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),            // "email"
-                new Claim(JwtRegisteredClaimNames.Name, $"{user.FirstName} {user.LastName}"), // "name"
-                new Claim("role", user.Role)  // "role" (custom claim)
-            }),
-            Expires = DateTime.UtcNow.AddHours(expiryHours),
-            Issuer = issuer,
-            Audience = audience,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return Task.FromResult(tokenHandler.WriteToken(token));
+        var token = _jwtGenerator.GenerateAccessToken(user);
+        return Task.FromResult(token);
     }
 }

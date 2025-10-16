@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using FlexNet.Domain.Entities;
 using FlexNet.Application.Interfaces.IServices;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace FlexNet.Api.Controllers;
 
@@ -9,10 +10,11 @@ namespace FlexNet.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
-
-    public AuthController(IUserService userService)
+    private readonly ITokenService _tokenService;
+    public AuthController(IUserService userService, ITokenService tokenService)
     {
         _userService = userService;
+        _tokenService = tokenService;
     }
 
     [HttpPost("login")]
@@ -32,11 +34,12 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var token = await _userService.GenerateJwtTokenAsync(user);
+            var tokens = await _tokenService.GenerateTokensAsync(user);
 
             return Ok(new
             {
-                token = token,
+                accessToken = tokens.AccessToken,
+                refreshToken = tokens.RefreshToken,
                 user = new
                 {
                     id = user.Id,
@@ -77,9 +80,13 @@ public class AuthController : ControllerBase
             };
 
             var createdUser = await _userService.CreateAsync(user);
+            
+            var tokens = await _tokenService.GenerateTokensAsync(createdUser);
 
             return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, new
             {
+                accessToken = tokens.AccessToken,
+                refreshToken = tokens.RefreshToken,
                 id = createdUser.Id,
                 firstName = createdUser.FirstName,
                 lastName = createdUser.LastName,
@@ -93,6 +100,23 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+    {
+        try
+        {
+            var tokens = await _tokenService.RefreshTokenAsync(request.RefreshToken);
+            return Ok(new
+            {
+                accessToken = tokens.AccessToken,
+                refreshToken = tokens.RefreshToken
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
     [HttpGet("user/{id}")]
     public async Task<IActionResult> GetUser(int id)
     {
