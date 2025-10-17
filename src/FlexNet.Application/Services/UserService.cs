@@ -1,11 +1,7 @@
 ﻿using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Domain.Entities;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using FlexNet.Application.DTOs.User; 
 
 namespace FlexNet.Application.Services;
 
@@ -67,5 +63,16 @@ public class UserService : IUserService
 
         var token = _jwtGenerator.GenerateAccessToken(user);
         return Task.FromResult(token);
+    }
+
+    public UserDto MapToDto(User user)
+    {
+        return new UserDto(
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Role
+        );
     }
 }
