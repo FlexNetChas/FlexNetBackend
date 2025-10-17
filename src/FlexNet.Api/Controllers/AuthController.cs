@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FlexNet.Application.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using FlexNet.Domain.Entities;
 using FlexNet.Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Identity.Data;
-
 namespace FlexNet.Api.Controllers;
 
 [ApiController]
@@ -11,10 +11,12 @@ public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly ITokenService _tokenService;
-    public AuthController(IUserService userService, ITokenService tokenService)
+    private readonly ILogger<AuthController> _logger;
+    public AuthController(IUserService userService, ITokenService tokenService,  ILogger<AuthController> logger)
     {
         _userService = userService;
         _tokenService = tokenService;
+        _logger = logger;
     }
 
     [HttpPost("login")]
@@ -112,9 +114,21 @@ public class AuthController : ControllerBase
                 refreshToken = tokens.RefreshToken
             });
         }
+        catch (SecurityException ex)
+        {
+            _logger.LogError(ex, "Security exception during token refresh");
+
+            return Unauthorized(new { message = "Security viaolation detected", error = "token_reuse" });
+        }
         catch (InvalidOperationException ex)
         {
+            _logger.LogWarning(ex, "Invalid operation during refresh");
             return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during refresh");
+            return StatusCode(500, new { message = "Internal server error" });
         }
     }
     [HttpGet("user/{id}")]
