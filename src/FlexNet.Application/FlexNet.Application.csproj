@@ -12,6 +12,13 @@
     <ProjectReference Include="..\FlexNet.Domain\FlexNet.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\ChatSession\" />
+    <Folder Include="DTOs\Avatar\" />
+    <Folder Include="DTOs\ChatMessage\" />
+    <Folder Include="DTOs\UserDescription\" />
+  </ItemGroup>
+
   <PropertyGroup>
 	  <TargetFramework>net8.0</TargetFramework>
 	  <ImplicitUsings>enable</ImplicitUsings>
