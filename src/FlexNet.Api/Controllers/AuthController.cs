@@ -1,8 +1,10 @@
 ﻿using FlexNet.Application.Exceptions;
 using Microsoft.AspNetCore.Mvc;
-using FlexNet.Domain.Entities;
 using FlexNet.Application.Interfaces.IServices;
-using Microsoft.AspNetCore.Identity.Data;
+using FlexNet.Domain.Entities;
+using FlexNet.Application.DTOs.Auth.Request;
+using FlexNet.Application.DTOs.Auth.Response;
+
 namespace FlexNet.Api.Controllers;
 
 [ApiController]
@@ -20,7 +22,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
         try
         {
@@ -37,20 +39,14 @@ public class AuthController : ControllerBase
             }
 
             var tokens = await _tokenService.GenerateTokensAsync(user);
+            var userDto = _userService.MapToDto(user);
+            var response = new LoginResponseDto(
+                tokens.AccessToken,
+                tokens.RefreshToken,
+                userDto
+            );
 
-            return Ok(new
-            {
-                accessToken = tokens.AccessToken,
-                refreshToken = tokens.RefreshToken,
-                user = new
-                {
-                    id = user.Id,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    email = user.Email,
-                    role = user.Role
-                }
-            });
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -59,7 +55,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         try
         {
@@ -82,19 +78,16 @@ public class AuthController : ControllerBase
             };
 
             var createdUser = await _userService.CreateAsync(user);
-            
             var tokens = await _tokenService.GenerateTokensAsync(createdUser);
+            var userDto = _userService.MapToDto(createdUser);
+            var response = new RegisterResponseDto(
+                tokens.AccessToken,
+                tokens.RefreshToken,
+                userDto
+            );
 
-            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, new
-            {
-                accessToken = tokens.AccessToken,
-                refreshToken = tokens.RefreshToken,
-                id = createdUser.Id,
-                firstName = createdUser.FirstName,
-                lastName = createdUser.LastName,
-                email = createdUser.Email,
-                role = createdUser.Role
-            });
+            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, response);
+
         }
         catch (Exception ex)
         {
@@ -103,16 +96,17 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto request)
     {
         try
         {
             var tokens = await _tokenService.RefreshTokenAsync(request.RefreshToken);
-            return Ok(new
-            {
-                accessToken = tokens.AccessToken,
-                refreshToken = tokens.RefreshToken
-            });
+            var response = new RefreshResponseDto(
+                tokens.AccessToken,
+                tokens.RefreshToken
+            );
+
+            return Ok(response);
         }
         catch (SecurityException ex)
         {
@@ -142,34 +136,12 @@ public class AuthController : ControllerBase
                 return NotFound(new { message = "User not found" });
             }
 
-            return Ok(new
-            {
-                id = user.Id,
-                firstName = user.FirstName,
-                lastName = user.LastName,
-                email = user.Email,
-                role = user.Role,
-                createdAt = user.CreatedAt,
-                isActive = user.IsActive
-            });
+            var userDto = _userService.MapToDto(user);
+            return Ok(userDto);
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "Internal server error", error = ex.Message });
         }
     }
-}
-
-public class LoginRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
-
-public class RegisterRequest
-{
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
 }
