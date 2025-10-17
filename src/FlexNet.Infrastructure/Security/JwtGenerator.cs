@@ -22,7 +22,7 @@ public class JwtGenerator : IJwtGenerator
         var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not found");
         var issuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("JWT Issuer not found");
         var audience = jwtSettings["Audience"] ?? throw new InvalidOperationException("JWT Audience not found");
-        var expiryHours = int.Parse(jwtSettings["ExpiryInHours"] ?? "24");
+        var expiryHours = int.Parse(jwtSettings["ExpiryInHours"] ?? throw new InvalidOperationException("JWT ExpiryInHours not found"));
 
         var tokenHandler = new JwtSecurityTokenHandler();
         tokenHandler.OutboundClaimTypeMap.Clear();
