@@ -13,8 +13,11 @@ namespace FlexNet.Application
         {
             // Registrera application services
             services.AddScoped<SendCounsellingMessage>();
-            services.AddScoped<IUserService, UserService>();
 
+            // Add Application Services
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ITokenService, TokenService>();
+    
             return services;
         }
     }

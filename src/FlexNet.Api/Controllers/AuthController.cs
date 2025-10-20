@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using FlexNet.Domain.Entities;
+﻿using FlexNet.Application.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using FlexNet.Application.Interfaces.IServices;
+using FlexNet.Domain.Entities;
+using FlexNet.Application.DTOs.Auth.Request;
+using FlexNet.Application.DTOs.Auth.Response;
 
 namespace FlexNet.Api.Controllers;
 
@@ -9,14 +12,17 @@ namespace FlexNet.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
-
-    public AuthController(IUserService userService)
+    private readonly ITokenService _tokenService;
+    private readonly ILogger<AuthController> _logger;
+    public AuthController(IUserService userService, ITokenService tokenService,  ILogger<AuthController> logger)
     {
         _userService = userService;
+        _tokenService = tokenService;
+        _logger = logger;
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
         try
         {
@@ -32,20 +38,15 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "User not found" });
             }
 
-            var token = await _userService.GenerateJwtTokenAsync(user);
+            var tokens = await _tokenService.GenerateTokensAsync(user);
+            var userDto = _userService.MapToDto(user);
+            var response = new LoginResponseDto(
+                tokens.AccessToken,
+                tokens.RefreshToken,
+                userDto
+            );
 
-            return Ok(new
-            {
-                token = token,
-                user = new
-                {
-                    id = user.Id,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    email = user.Email,
-                    role = user.Role
-                }
-            });
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -54,7 +55,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         try
         {
@@ -77,15 +78,16 @@ public class AuthController : ControllerBase
             };
 
             var createdUser = await _userService.CreateAsync(user);
+            var tokens = await _tokenService.GenerateTokensAsync(createdUser);
+            var userDto = _userService.MapToDto(createdUser);
+            var response = new RegisterResponseDto(
+                tokens.AccessToken,
+                tokens.RefreshToken,
+                userDto
+            );
 
-            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, new
-            {
-                id = createdUser.Id,
-                firstName = createdUser.FirstName,
-                lastName = createdUser.LastName,
-                email = createdUser.Email,
-                role = createdUser.Role
-            });
+            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, response);
+
         }
         catch (Exception ex)
         {
@@ -93,6 +95,36 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto request)
+    {
+        try
+        {
+            var tokens = await _tokenService.RefreshTokenAsync(request.RefreshToken);
+            var response = new RefreshResponseDto(
+                tokens.AccessToken,
+                tokens.RefreshToken
+            );
+
+            return Ok(response);
+        }
+        catch (SecurityException ex)
+        {
+            _logger.LogError(ex, "Security exception during token refresh");
+
+            return Unauthorized(new { message = "Security viaolation detected", error = "token_reuse" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation during refresh");
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during refresh");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
+    }
     [HttpGet("user/{id}")]
     public async Task<IActionResult> GetUser(int id)
     {
@@ -104,34 +136,12 @@ public class AuthController : ControllerBase
                 return NotFound(new { message = "User not found" });
             }
 
-            return Ok(new
-            {
-                id = user.Id,
-                firstName = user.FirstName,
-                lastName = user.LastName,
-                email = user.Email,
-                role = user.Role,
-                createdAt = user.CreatedAt,
-                isActive = user.IsActive
-            });
+            var userDto = _userService.MapToDto(user);
+            return Ok(userDto);
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "Internal server error", error = ex.Message });
         }
     }
-}
-
-public class LoginRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
-
-public class RegisterRequest
-{
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
 }
