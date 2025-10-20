@@ -17,4 +17,6 @@ appsettings.Development.json
 # Migrations folder
 src/FlexNet.Infrastructure/Migrations/
 
-
+# ignore appsettings
+/appsettings.json
+/appsettings.Development.json
