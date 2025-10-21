@@ -4,6 +4,7 @@ using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Domain.Entities;
 using FlexNet.Application.DTOs.Auth.Request;
 using FlexNet.Application.DTOs.Auth.Response;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FlexNet.Api.Controllers;
 
