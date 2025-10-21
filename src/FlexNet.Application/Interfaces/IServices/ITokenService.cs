@@ -1,11 +1,11 @@
-using FlexNet.Application.Models.Records;
+using FlexNet.Application.DTOs.Token.Response;
 using FlexNet.Domain.Entities;
 
 namespace FlexNet.Application.Interfaces.IServices;
 
 public interface ITokenService
 {
-Task<TokenPair> GenerateTokensAsync(User user);
-Task<TokenPair> RefreshTokenAsync(string refreshToken);
+Task<TokenPairResponseDto> GenerateTokensAsync(User user);
+Task<TokenPairResponseDto> RefreshTokenAsync(string refreshToken);
 
 }
