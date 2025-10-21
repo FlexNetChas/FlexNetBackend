@@ -4,6 +4,7 @@ namespace FlexNet.Application.DTOs.ChatSession.Response
 {
     public record CompleteChatSessionResponseDto(
         int Id,
+        int UserId,
         string? Summary,
         DateTime StartedTime,
         DateTime? EndedTime,

@@ -17,7 +17,8 @@ namespace FlexNet.Application
             // Add Application Services
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITokenService, TokenService>();
-    
+            services.AddScoped<IChatSessionService, ChatSessionService>();
+
             return services;
         }
     }

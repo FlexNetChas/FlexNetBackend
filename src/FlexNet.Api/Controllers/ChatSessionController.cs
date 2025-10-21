@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.DTOs.ChatSession.Request;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace FlexNet.Api.Controllers
 {
@@ -23,7 +24,7 @@ namespace FlexNet.Api.Controllers
             try
             {
                 var compactChatSessions = await _chatSessionService.GetAllAsync();
-                if (compactChatSessions != null)
+                if (compactChatSessions.Any())
                     return Ok(compactChatSessions);
 
                 return NotFound("No ChatSessions Found");
@@ -35,7 +36,7 @@ namespace FlexNet.Api.Controllers
         }
 
         //Get a complete ChatSession from an ID
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetChatSessionAsync(int id)
         {
             try
@@ -76,7 +77,7 @@ namespace FlexNet.Api.Controllers
             try
             {
                 var createdChatSession = await _chatSessionService.CreateAsync(chatSession);
-                return Ok(createdChatSession);
+                return StatusCode(201,"Session Created");
             }
             catch (Exception ex)
             {
@@ -85,7 +86,7 @@ namespace FlexNet.Api.Controllers
         }
 
         // Delete a ChatSession by ID
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteChatSessionAsync(int id)
         {
             try

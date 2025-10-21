@@ -8,9 +8,8 @@ namespace FlexNet.Application.Interfaces.IServices
     {
         Task<IEnumerable<CompactChatSessionResponseDto>> GetAllAsync();
         Task<CompleteChatSessionResponseDto> GetByIdAsync(int id);
-
-        Task<User> CreateAsync(CreateChatSessionRequestDto chatSession);
-        Task<User> UpdateAsync(UpdateChatSessionsRequestDto chatSession);
+        Task<CompleteChatSessionResponseDto> CreateAsync(CreateChatSessionRequestDto chatSession);
+        Task<CompleteChatSessionResponseDto> UpdateAsync(UpdateChatSessionsRequestDto chatSession);
         Task<bool> DeleteAsync(int id);
     }
 }

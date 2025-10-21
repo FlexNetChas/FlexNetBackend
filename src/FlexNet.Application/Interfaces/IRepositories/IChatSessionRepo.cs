@@ -6,11 +6,11 @@ namespace FlexNet.Application.Interfaces.IRepositories
 {
     public interface IChatSessionRepo
     {
-        Task<IEnumerable<CompactChatSessionResponseDto>> GetAllAsync();
-        Task<CompleteChatSessionResponseDto> GetByIdAsync(int id);
+        Task<IEnumerable<ChatSession>> GetAllAsync();
+        Task<ChatSession> GetByIdAsync(int id);
 
-        Task<User> AddAsync(CreateChatSessionRequestDto chatSession);
-        Task<User> UpdateAsync(UpdateChatSessionsRequestDto chatSession);
+        Task<ChatSession> AddAsync(ChatSession chatSession);
+        Task<ChatSession> UpdateAsync(ChatSession chatSession);
         Task<bool> DeleteAsync(int id);
     }
 }
