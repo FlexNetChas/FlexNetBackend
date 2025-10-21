@@ -4,11 +4,15 @@ using FlexNet.Application.UseCases;
 using Microsoft.AspNetCore.Mvc;
 using Mscc.GenerativeAI;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FlexNet.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
+    [EnableRateLimiting("authenticated-counsellor")]
     public class CounsellorController : ControllerBase
     {
         private readonly SendCounsellingMessage _sendMessage;
