@@ -1,4 +1,5 @@
-﻿using FlexNet.Domain.Entities;
+﻿using FlexNet.Application.DTOs.User;
+using FlexNet.Domain.Entities;
 
 namespace FlexNet.Application.Interfaces.IServices; 
 
@@ -12,4 +13,7 @@ public interface IUserService
     Task<bool> DeleteAsync(int id);
     Task<bool> ValidatePasswordAsync(string email, string password);
     Task<string> GenerateJwtTokenAsync(User user);
+
+    // Mapping method in userservice to separate mapping logic from API layer
+    UserDto MapToDto(User user);
 }

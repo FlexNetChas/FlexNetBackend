@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FlexNet.Application.DTOs.Counsellor.Request;
+using FlexNet.Application.Models; // Add this for Task
+using FlexNet.Application.UseCases;
+using Microsoft.AspNetCore.Mvc;
 using Mscc.GenerativeAI;
 using System.Threading.Tasks;
-using FlexNet.Application.Models; // Add this for Task
-
-using FlexNet.Application.UseCases;
 
 namespace FlexNet.Api.Controllers
 {
@@ -19,7 +19,7 @@ namespace FlexNet.Api.Controllers
         }
 
         [HttpPost("message")]
-        public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest request)
+        public async Task<IActionResult> SendMessage([FromBody] SendMessageRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Message))
             {
