@@ -1,12 +1,8 @@
-﻿using FlexNet.Application.Interfaces.IRepositories;
+﻿using FlexNet.Application.DTOs.ChatSession.Request;
+using FlexNet.Application.DTOs.ChatSession.Response;
+using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Domain.Entities;
 using FlexNet.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FlexNet.Infrastructure.Repositories
 {
@@ -19,29 +15,28 @@ namespace FlexNet.Infrastructure.Repositories
             _context = ctx;
         }
 
-        public Task<IEnumerable<ChatSession>> GetAllAsync()
-        {
-            
-            throw new NotImplementedException();
-        }
-
-        public Task<ChatSession> GetByIdAsync(int id)
-        {
-
-            throw new NotImplementedException();
-        }
-
-        public Task<User> AddAsync(ChatSession chatSession)
+        public async Task<IEnumerable<CompactChatSessionResponseDto>> GetAllAsync()
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> DeleteAsync(int id)
+        public async Task<CompleteChatSessionResponseDto> GetByIdAsync(int id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<User> UpdateAsync(ChatSession chatSession)
+        public async Task<User> AddAsync(CreateChatSessionRequestDto chatSession)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public async Task<User> UpdateAsync(UpdateChatSessionsRequestDto chatSession)
         {
             throw new NotImplementedException();
         }
