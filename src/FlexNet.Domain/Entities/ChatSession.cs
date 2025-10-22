@@ -2,7 +2,7 @@ namespace FlexNet.Domain.Entities;
 
 public class ChatSession
 {
-    public int Id { get; set; }
+    public int? Id { get; set; }
     public int UserId { get; set; }
     public string? Summary { get; set; }
     public DateTime StartedTime { get; set; }  

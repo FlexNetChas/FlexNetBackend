@@ -3,7 +3,7 @@
 namespace FlexNet.Application.DTOs.ChatSession.Request
 {
     public record UpdateChatSessionsRequestDto(
-    int Id,
+    int SessionID,
     string? Summary,
     DateTime StartedTime,
     DateTime? EndedTime,

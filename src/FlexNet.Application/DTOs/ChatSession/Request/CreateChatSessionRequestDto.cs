@@ -4,7 +4,6 @@ using FlexNet.Application.DTOs.ChatMessage.Response;
 namespace FlexNet.Application.DTOs.ChatSession.Request
 {
     public record CreateChatSessionRequestDto(
-    int userID,
     string? Summary,
     DateTime StartedTime,
     DateTime? EndedTime,

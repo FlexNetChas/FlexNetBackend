@@ -14,19 +14,21 @@ namespace FlexNet.Infrastructure.Repositories
             _context = ctx;
         }
 
-        public async Task<IEnumerable<ChatSession>> GetAllAsync()
+        public async Task<List<ChatSession>> GetAllAsync(int UserID)
         {
-            return await _context.ChatSessions
-                .AsNoTracking()
+            var usersChatSessions = await _context.ChatSessions
+                .Where(s => s.UserId == UserID)
                 .ToListAsync();
+
+            return usersChatSessions;
         }
 
-        public async Task<ChatSession?> GetByIdAsync(int id)
+        public async Task<ChatSession?> GetByIdAsync(int SessionID, int UserID)
         {
             return await _context.ChatSessions
+                .Where(s => s.UserId == UserID && s.Id == SessionID)
                 .Include(s => s.ChatMessages)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .FirstOrDefaultAsync();
         }
 
         public async Task<ChatSession> AddAsync(ChatSession entity)
@@ -38,32 +40,54 @@ namespace FlexNet.Infrastructure.Repositories
 
         public async Task<ChatSession?> UpdateAsync(ChatSession entity)
         {
-            var existing = await _context.ChatSessions
-                .Include(s => s.ChatMessages)
-                .FirstOrDefaultAsync(s => s.Id == entity.Id);
+            var chatSession = await _context.ChatSessions
+                .FirstOrDefaultAsync(s => s.Id == entity.Id && s.UserId == entity.UserId);
 
-            if (existing == null)
+            if (chatSession == null)
                 return null;
 
-            existing.Summary = entity.Summary;
-            existing.StartedTime = entity.StartedTime;
-            existing.EndedTime = entity.EndedTime;
+            chatSession.Summary = entity.Summary;
+            chatSession.StartedTime = entity.StartedTime;
+            chatSession.EndedTime = entity.EndedTime;
 
-            //_context.ChatMessage.RemoveRange(existing.ChatMessages);
-            //existing.ChatMessages = entity.ChatMessages;
+            //Might not need this depending on how/if we let users update old chat messages
+            foreach (var message in entity.ChatMessages)
+            {
+                if (message.Id == 0)
+                {
+                    chatSession.ChatMessages.Add(message);
+                }
+                else
+                {
+                    // Not sure if we want the functionality to update existing messages.
+                    var existingMessage = chatSession.ChatMessages
+                        .FirstOrDefault(m => m.Id == message.Id);
+
+                    if (existingMessage != null)
+                    {
+                        existingMessage.MessageText = message.MessageText;
+                        existingMessage.TimeStamp = message.TimeStamp;
+                        existingMessage.LastUpdated = message.LastUpdated;
+                    }
+                }
+            }
 
             await _context.SaveChangesAsync();
-            return existing;
+            return chatSession;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id, int UserID)
         {
-            var existing = await _context.ChatSessions.FindAsync(id);
-            if (existing == null)
+            var chatSession = await _context.ChatSessions
+                .Where(s => s.UserId == UserID && s.Id == id)
+                .FirstOrDefaultAsync();
+
+            if (chatSession == null)
                 return false;
 
-            _context.ChatSessions.Remove(existing);
+            _context.ChatSessions.Remove(chatSession);
             await _context.SaveChangesAsync();
+
             return true;
         }
     }
