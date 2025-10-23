@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Avatar> Avatars { get; set; }
     public DbSet<UserDescription> UserDescriptions { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<ChatMessage> ChatMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

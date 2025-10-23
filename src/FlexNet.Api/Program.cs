@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using FlexNet.Api;
+using FlexNet.Api.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,8 @@ builder.Services.AddSwaggerGen(c =>
 // Add all layers through API layer
 builder.Services.AddAppDI(builder.Configuration);
 
+// Add Configuration layer
+builder.Services.AddRateLimitingConfiguration();
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -92,7 +95,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
-
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

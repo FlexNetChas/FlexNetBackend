@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepo, UserRepository>();
         services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
         services.AddScoped<IJwtGenerator, JwtGenerator>();
+        services.AddScoped<IUserDescriptionRepo, UserDescriptionRepository>();
         services.AddScoped<IChatSessionRepo, ChatSessionRepo>();
 
         // Add Guidance service
