@@ -35,12 +35,14 @@ namespace FlexNet.Infrastructure.Repositories
         {
             _context.ChatSessions.Add(entity);
             await _context.SaveChangesAsync();
+
             return entity;
         }
 
         public async Task<ChatSession?> UpdateAsync(ChatSession entity)
         {
             var chatSession = await _context.ChatSessions
+                .Include(s => s.ChatMessages)
                 .FirstOrDefaultAsync(s => s.Id == entity.Id && s.UserId == entity.UserId);
 
             if (chatSession == null)
@@ -59,7 +61,6 @@ namespace FlexNet.Infrastructure.Repositories
                 }
                 else
                 {
-                    // Not sure if we want the functionality to update existing messages.
                     var existingMessage = chatSession.ChatMessages
                         .FirstOrDefault(m => m.Id == message.Id);
 
