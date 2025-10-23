@@ -13,6 +13,8 @@ namespace FlexNet.Application
             services.AddScoped<SendCounsellingMessage>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IChatSessionService, ChatSessionService>();
+
             services.AddScoped<IUserDescriptionService, UserDescriptionService>();
 
             return services;
