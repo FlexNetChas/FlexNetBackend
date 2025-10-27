@@ -8,6 +8,8 @@ using Xunit.Abstractions;
 
 namespace FlexNet.Application.Tests
 {
+    // ITestOutputHelper is used to write output, displayed in test results window.
+    // Useful for debugging and logging during tests with it's own window instead of sorting through console logs (dotnet test)
     public class UserDescriptionServiceTests
     {
         private readonly Mock<IUserDescriptionRepo> _repoMock;
@@ -20,6 +22,11 @@ namespace FlexNet.Application.Tests
             _service = new UserDescriptionService(_repoMock.Object);
             _output = output;
         }
+
+        /* Theory Tests for practis reason. The function will work fine with Fact
+         * Though Theory allows us to run the same test with different inputs 
+         * witch is useful in Should_UpdateFields_WhenPatchingUser
+         */
 
         [Theory]
         [InlineData(1)]
