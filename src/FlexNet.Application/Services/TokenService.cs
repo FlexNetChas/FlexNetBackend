@@ -2,10 +2,10 @@
 using System.Security.Cryptography;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
-using FlexNet.Application.Models.Records;
 using FlexNet.Domain.Entities;
 using FlexNet.Application.Exceptions;
 using Microsoft.Extensions.Logging;
+using FlexNet.Application.DTOs.Token.Response;
 
 namespace FlexNet.Application.Services;
 
@@ -24,7 +24,7 @@ public class TokenService : ITokenService
         _logger.LogInformation("TokenService initialized");
 
     }
-    public async Task<TokenPair> GenerateTokensAsync(User user)
+    public async Task<TokenPairResponseDto> GenerateTokensAsync(User user)
     {
         var accessToken =  _jwtGenerator.GenerateAccessToken(user);
 
@@ -47,10 +47,10 @@ public class TokenService : ITokenService
             user.Id,
             refreshToken.ExpiresAt
         );
-        return new TokenPair(accessToken, refreshTokenString);
+        return new TokenPairResponseDto(accessToken, refreshTokenString);
     }
 
-    public async Task<TokenPair> RefreshTokenAsync(string refreshToken)
+    public async Task<TokenPairResponseDto> RefreshTokenAsync(string refreshToken)
     {
         _logger.LogInformation("RefreshTokenAsync called");
 
