@@ -2,6 +2,7 @@ using FlexNet.Api;
 using FlexNet.Api.Configuration;
 using FlexNet.Api.Exceptions;
 using FlexNet.Api.Middleware;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,9 @@ builder.Services.AddExceptionHandler<NotFoundExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// Add all layers through API layer
+// Add all layers through API layer (registers repositories, services, and validators)
 builder.Services.AddAppDI(builder.Configuration);
+builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddRateLimitingConfiguration();
 builder.Services.AddAuthenticationConfiguration(builder.Configuration);
 builder.Services.AddCorsConfiguration();
