@@ -30,6 +30,10 @@ public static class DependencyInjection
         services.AddScoped<IUserDescriptionRepo, UserDescriptionRepository>();
         services.AddScoped<IChatSessionRepo, ChatSessionRepo>();
 
+        // Add User Context Service
+        services.AddHttpContextAccessor();
+        services.AddScoped<IUserContextService, ExtractUserIdService>();
+
         // Add Guidance service
         services.AddScoped<GeminiGuidanceService>();
         services.AddScoped<IGuidanceService>(provider =>

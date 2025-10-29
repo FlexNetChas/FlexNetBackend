@@ -4,38 +4,48 @@ using FlexNet.Application.DTOs.ChatSession.Response;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Domain.Entities;
-using Microsoft.VisualBasic;
 
 namespace FlexNet.Application.Services
 {
     class ChatSessionService : IChatSessionService
     {
         private readonly IChatSessionRepo _chatSessionRepo;
-        public ChatSessionService(IChatSessionRepo repo)
+        private readonly IUserContextService _userContextService;
+        public ChatSessionService(IChatSessionRepo repo, IUserContextService userContextService)
         {
             _chatSessionRepo = repo;
+            _userContextService = userContextService;
         }
 
-        async Task<IEnumerable<CompactChatSessionResponseDto>> IChatSessionService.GetAllAsync(int UserID)
+        public async Task<IEnumerable<CompactChatSessionResponseDto>> GetAllAsync()
         {
-            var sessions = await _chatSessionRepo.GetAllAsync(UserID);
+            var userID = _userContextService.GetCurrentUserId();
+            var sessions = await _chatSessionRepo.GetAllAsync(userID);
             var sessionsDto = sessions.Select(s => new CompactChatSessionResponseDto(
                 s.Id ?? -1, s.Summary, s.StartedTime, s.EndedTime
             ));
             return sessionsDto;
         }
 
-        public async Task<CompleteChatSessionResponseDto?> GetByIdAsync(int id, int UserID)
+        public async Task<CompleteChatSessionResponseDto?> GetByIdAsync(int sessionID)
         {
-            var entity = await _chatSessionRepo.GetByIdAsync(id, UserID);
-            return entity == null ? null : ConvertToCompleteDto(entity);
+            var userID = _userContextService.GetCurrentUserId();
+            var entity = await _chatSessionRepo.GetByIdAsync(sessionID, userID);
+
+            if (entity is null)
+            {
+                throw new KeyNotFoundException("Chat session coudln't be found. Please try again!");
+            }
+
+            return ConvertToCompleteDto(entity);
         }
 
-        public async Task<CompleteChatSessionResponseDto?> CreateAsync(CreateChatSessionRequestDto chatSession, int UserID)
+        public async Task<CompleteChatSessionResponseDto?> CreateAsync(CreateChatSessionRequestDto chatSession)
         {
+            var userID = _userContextService.GetCurrentUserId();
             var entity = new ChatSession
             {
-                UserId = UserID,
+                UserId = userID,
                 Summary = chatSession.Summary,
                 StartedTime = chatSession.StartedTime,
                 EndedTime = chatSession.EndedTime,
@@ -51,12 +61,13 @@ namespace FlexNet.Application.Services
             return ConvertToCompleteDto(created);
         }
 
-        public async Task<CompleteChatSessionResponseDto?> UpdateAsync(UpdateChatSessionsRequestDto chatSession, int UserID)
+        public async Task<CompleteChatSessionResponseDto?> UpdateAsync(UpdateChatSessionsRequestDto chatSession)
         {
+            var userID = _userContextService.GetCurrentUserId();
             var entity = new ChatSession
             {
                 Id = chatSession.SessionID,
-                UserId = UserID,
+                UserId = userID,
                 Summary = chatSession.Summary,
                 StartedTime = chatSession.StartedTime,
                 EndedTime = chatSession.EndedTime,
@@ -77,12 +88,26 @@ namespace FlexNet.Application.Services
             };
 
             var updated = await _chatSessionRepo.UpdateAsync(entity);
-            return updated != null ? ConvertToCompleteDto(updated) : null;
+
+            if (updated is null)
+            {
+                throw new KeyNotFoundException($"Chat session coudln't be found. Please try again!");
+            }
+
+            return ConvertToCompleteDto(updated);
         }
 
-        public async Task<bool> DeleteAsync(int id, int UserID)
+        public async Task<bool> DeleteAsync(int sessionID)
         {
-            return await _chatSessionRepo.DeleteAsync(id, UserID);
+            var userID = _userContextService.GetCurrentUserId();
+            var result = await _chatSessionRepo.DeleteAsync(sessionID, userID);
+
+            if (!result)
+            {
+                throw new KeyNotFoundException("Chat session is already deleted or coudln't be found");
+            }
+
+            return result;
         }
 
         private CompleteChatSessionResponseDto ConvertToCompleteDto(ChatSession session)

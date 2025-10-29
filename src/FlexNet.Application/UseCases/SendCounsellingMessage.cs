@@ -17,6 +17,11 @@ namespace FlexNet.Application.UseCases
 
         public async Task<SendMessageResponseDto> ExecuteAsync(SendMessageRequestDto request)
         {
+            if (string.IsNullOrWhiteSpace(request.Message))
+            {
+                throw new InvalidOperationException("Message cannot be empty. Please provide a message!");
+            }
+
             var conversationHistory = Enumerable.Empty<ConversationMessage>();
             var studentContext =
                 new StudentContext(Age: request.Age ?? 16, Gender: null, Education: null, Purpose: null);

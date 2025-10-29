@@ -3,9 +3,9 @@ using System.Security.Cryptography;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Domain.Entities;
-using FlexNet.Application.Exceptions;
 using Microsoft.Extensions.Logging;
 using FlexNet.Application.DTOs.Token.Response;
+using FlexNet.Application.DTOs.Auth.Response; 
 
 namespace FlexNet.Application.Services;
 
@@ -50,14 +50,14 @@ public class TokenService : ITokenService
         return new TokenPairResponseDto(accessToken, refreshTokenString);
     }
 
-    public async Task<TokenPairResponseDto> RefreshTokenAsync(string refreshToken)
+    public async Task<RefreshResponseDto> RefreshTokenAsync(string refreshToken)
     {
         _logger.LogInformation("RefreshTokenAsync called");
 
         var storedToken = await _rtRepo.GetByTokenAsync(refreshToken);
 
-        if (storedToken == null )
-            throw new InvalidOperationException("Invalid refresh token");
+        if (storedToken is null )
+            throw new UnauthorizedAccessException("Invalid refresh token");
         
         _logger.LogInformation(
             "Token found for user {UserId}. IsUsed: {IsUsed}, IsRevoked: {IsRevoked}, ExpiresAt: {ExpiresAt}",
@@ -74,7 +74,7 @@ public class TokenService : ITokenService
                                                "Possible security breach!",
                 storedToken.UserId,
                 storedToken.UsedAt);
-            throw new SecurityException("Token reuse detected. Please log in again.");
+            throw new UnauthorizedAccessException("Token reuse detected. Please log in again.");
 
         }
         if (!IsTokenValid(storedToken))
@@ -88,7 +88,7 @@ public class TokenService : ITokenService
                 storedToken.UserId
             );
             
-            throw new InvalidOperationException($"Token {reason}");
+            throw new UnauthorizedAccessException($"Token {reason}");
         }
         _logger.LogInformation("Marking token as used for user {UserId}", storedToken.UserId);
  
@@ -99,7 +99,12 @@ public class TokenService : ITokenService
             "Successfully refreshed token for user {UserId}. Generating new token pair...",
             storedToken.UserId
         );
-        return await GenerateTokensAsync(storedToken.User!);
+        var tokens = await GenerateTokensAsync(storedToken.User!);
+
+        return new RefreshResponseDto(
+            tokens.AccessToken,
+            tokens.RefreshToken
+        );
     }
 
     private bool IsTokenValid(RefreshToken token)
