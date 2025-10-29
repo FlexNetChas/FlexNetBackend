@@ -21,7 +21,7 @@ public class UserDescriptionService : IUserDescriptionService
         
         if (userDescription == null)
         {
-            throw new InvalidOperationException("User description not found");
+            throw new KeyNotFoundException("User description not found");
         }
 
         return MapToDto(userDescription);
@@ -31,22 +31,22 @@ public class UserDescriptionService : IUserDescriptionService
     {
         var userDescription = await _userDescriptionRepo.GetUserDescriptionByUserIdAsync(userId);
 
-        if (userDescription == null)
+        if (userDescription is null)
         {
-            throw new InvalidOperationException("User description not found");
+            throw new KeyNotFoundException("User description not found");
         }
 
         // Only update (PATCH) values that aren't null
         if (request.Age.HasValue)
             userDescription.Age = request.Age.Value;
 
-        if (request.Gender != null)
+        if (request.Gender is not null)
             userDescription.Gender = request.Gender;
 
-        if (request.Education != null)
+        if (request.Education is not null)
             userDescription.Education = request.Education;
 
-        if (request.Purpose != null)
+        if (request.Purpose is not null)
             userDescription.Purpose = request.Purpose;
 
         var updated = await _userDescriptionRepo.UpdateUserDescriptionAsync(userDescription);

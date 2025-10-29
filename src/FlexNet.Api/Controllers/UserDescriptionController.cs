@@ -1,11 +1,15 @@
 ﻿using FlexNet.Application.DTOs.UserDescription.Request;
 using FlexNet.Application.Interfaces.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FlexNet.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
+[EnableRateLimiting("global-quota")]
 public class UserDescriptionController : ControllerBase
 {
     private readonly IUserDescriptionService _userDescriptionService;
@@ -18,41 +22,17 @@ public class UserDescriptionController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> Get(int userId)
     {
-        try
-        {
-            var userDescription = await _userDescriptionService.GetUserDescriptionByUserIdAsync(userId);
-            if (userDescription == null)
-            {
-                return NotFound(new { message = "User description not found" });
-            }
-
-            return Ok(userDescription);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-        }
+        var userDescription = await _userDescriptionService.GetUserDescriptionByUserIdAsync(userId);
+        return Ok(userDescription);
     }
 
 
-    // Patch will futher on improve performance and reduce API payload
-    // A user will be able to update all fields or patch individual values 
+    /* Patch will futher on improve performance and reduce API payload
+     * A user will be able to update all fields or patch individual values */
     [HttpPatch("user/{userId}")]
     public async Task<IActionResult> Patch(int userId, PatchUserDescriptionRequestDto request)
     {
-        try
-        {
-            var userDescription = await _userDescriptionService.PatchUserDescriptionAsync(userId, request);
-
-            if (userDescription == null)
-                return NotFound(new { message = "User description not found" });
-
-            return Ok(userDescription);
-        }
-
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Internal server error", error = ex.Message });
-        }
+        var userDescription = await _userDescriptionService.PatchUserDescriptionAsync(userId, request);
+        return Ok(userDescription);
     }
 }
