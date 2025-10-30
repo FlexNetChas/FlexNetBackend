@@ -12,9 +12,9 @@ namespace FlexNet.Application.FluentValidators.Auth
      * from application layer/our services.
      * 
      * Fluent validation handle response with proper error messages to consumer of our API */
-    public class UserRegistrationDtoValidator : AbstractValidator<RegisterRequestDto>
+    public class UserRegistrationRequestDtoValidator : AbstractValidator<RegisterRequestDto>
     {
-        public UserRegistrationDtoValidator()
+        public UserRegistrationRequestDtoValidator()
         {
             RuleFor(user => user.FirstName)
                 .NotEmpty()
@@ -37,7 +37,6 @@ namespace FlexNet.Application.FluentValidators.Auth
                     .WithMessage("Email cannot exceed 100 characters");
 
             /* Todo:
-             * Should we include special characters, numbers, uppercase, lowercase requirements?
              * Do we need a field for confirm password? Need to add confirm password to entity and DTO as well */
             RuleFor(user => user.Password)
                 .NotEmpty()
@@ -45,7 +44,10 @@ namespace FlexNet.Application.FluentValidators.Auth
                 .MinimumLength(6)
                     .WithMessage("Password must be at least 6 characters long")
                 .MaximumLength(100)
-                    .WithMessage("Password cannot exceed 100 characters");
+                    .WithMessage("Password cannot exceed 100 characters")
+                // We could further enhance password complexity requirements by improving our regex
+                .Matches(@"^(?=.*[a-z])(?=.*[A-Z]).+$")
+                    .WithMessage("Password must contain at least one uppercase letter and one lowercase letter");
         }
     }
 }

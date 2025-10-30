@@ -13,9 +13,9 @@ namespace FlexNet.Application.FluentValidators.Auth
      * 
      * Fluent validation handle response with proper error messages to consumer of our API
      */
-    public class UserLoginDtoValidator : AbstractValidator<LoginRequestDto>
+    public class UserLoginRequestDtoValidator : AbstractValidator<LoginRequestDto>
     {
-        public UserLoginDtoValidator()
+        public UserLoginRequestDtoValidator()
         {
             RuleFor(user => user.Email)
                 .NotEmpty()
@@ -31,7 +31,10 @@ namespace FlexNet.Application.FluentValidators.Auth
                 .MinimumLength(6)
                     .WithMessage("Password must be at least 6 characters long")
                 .MaximumLength(100)
-                    .WithMessage("Password cannot exceed 100 characters");
+                    .WithMessage("Password cannot exceed 100 characters")
+                // We could further enhance password complexity requirements by improving our regex
+                .Matches(@"^(?=.*[a-z])(?=.*[A-Z]).+$")
+                    .WithMessage("Password must contain at least one uppercase letter and one lowercase letter");
         }
     }
 }
