@@ -10,7 +10,7 @@ namespace FlexNet.Application.Interfaces.IServices
 {
     public interface IGuidanceService
     {
-        Task<GuidanceResult> GetGuidanceAsync(string userMessage, IEnumerable<ConversationMessage> conversationHistory,
+        Task<Result<string>> GetGuidanceAsync(string userMessage, IEnumerable<ConversationMessage> conversationHistory,
             StudentContext studentContext);
     }
 }
