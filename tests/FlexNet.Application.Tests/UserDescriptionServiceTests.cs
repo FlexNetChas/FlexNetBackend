@@ -45,7 +45,7 @@ namespace FlexNet.Application.Tests
 
             // Assert
             Assert.NotNull(exception);
-            Assert.IsType<InvalidOperationException>(exception);
+            Assert.IsType<KeyNotFoundException>(exception);
         }
 
         [Theory]
