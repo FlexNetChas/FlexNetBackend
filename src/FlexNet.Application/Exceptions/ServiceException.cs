@@ -57,7 +57,7 @@ public class ServiceException : Exception
             ErrorCategory.RateLimited,
             canRetry: true,
             errorCode: "RATE_LIMITED",
-            userMessage:"You're sedning messages a bit too quickly. Let's take a short break and try again in a moment. ",
+            userMessage:"You're sending messages a bit too quickly. Let's take a short break and try again in a moment. ",
             httpStatusCode: 429,
             retryAfter: retryAfter,
             innerException: innerException
