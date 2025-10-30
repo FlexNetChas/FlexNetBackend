@@ -23,7 +23,7 @@ public class GuidanceService : IGuidanceService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<GuidanceResult> GetGuidanceAsync(
+    public async Task<Result<string>> GetGuidanceAsync(
         string userMessage, 
         IEnumerable<ConversationMessage> conversationHistory, 
         StudentContext studentContext)
@@ -83,7 +83,7 @@ public class GuidanceService : IGuidanceService
             RetryAfter: 60,
             Message: "We're experiencing difficulties. Please try again in a moment.");  
         
-        return GuidanceResult.Failure(error);
+        return Result<string>.Failure(error);
     }
 
     private static TimeSpan CalculateDelay(int attempt, TimeSpan? retryAfter)
@@ -98,7 +98,7 @@ public class GuidanceService : IGuidanceService
         return TimeSpan.FromMilliseconds(totalMs);  
     }
 
-    private static GuidanceResult CreateFailureResult(ServiceException ex)
+    private static Result <string> CreateFailureResult(ServiceException ex)
     {
         var error = new ErrorInfo(
             ErrorCode: ex.ErrorCode,
@@ -106,6 +106,6 @@ public class GuidanceService : IGuidanceService
             RetryAfter: ex.RetryAfter.HasValue ? (int)ex.RetryAfter.Value.TotalSeconds : null, 
             Message: ex.UserMessage);
         
-        return GuidanceResult.Failure(error);
+        return Result<string>.Failure(error);
     }
 }
