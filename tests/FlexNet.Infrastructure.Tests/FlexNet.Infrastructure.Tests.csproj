@@ -20,4 +20,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FlexNet.Infrastructure\FlexNet.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
