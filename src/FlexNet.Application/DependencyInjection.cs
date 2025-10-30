@@ -15,6 +15,8 @@ namespace FlexNet.Application
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserDescriptionService, UserDescriptionService>();
 
+            services.AddScoped<AiContextBuilder>();
+
             return services;
         }
     }
