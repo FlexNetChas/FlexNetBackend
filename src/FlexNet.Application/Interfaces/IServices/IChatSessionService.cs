@@ -5,10 +5,10 @@ namespace FlexNet.Application.Interfaces.IServices
 {
     public interface IChatSessionService
     {
-        Task<IEnumerable<CompactChatSessionResponseDto>> GetAllAsync(int UserID);
-        Task<CompleteChatSessionResponseDto?> GetByIdAsync(int SessionID, int UserID);
-        Task<CompleteChatSessionResponseDto?> CreateAsync(CreateChatSessionRequestDto chatSession, int UserID);
-        Task<CompleteChatSessionResponseDto?> UpdateAsync(UpdateChatSessionsRequestDto chatSession, int UserID);
-        Task<bool> DeleteAsync(int SessionID, int UserID);
+        Task<IEnumerable<CompactChatSessionResponseDto>> GetAllAsync();
+        Task<CompleteChatSessionResponseDto?> GetByIdAsync(int sessionID);
+        Task<CompleteChatSessionResponseDto?> CreateAsync(CreateChatSessionRequestDto chatSession);
+        Task<CompleteChatSessionResponseDto?> UpdateAsync(UpdateChatSessionsRequestDto chatSession);
+        Task<bool> DeleteAsync(int sessionID);
     }
 }
