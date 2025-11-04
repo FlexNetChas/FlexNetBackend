@@ -31,6 +31,20 @@ public static class DependencyInjection
         services.AddScoped<IJwtGenerator, JwtGenerator>();
         services.AddScoped<IUserDescriptionRepo, UserDescriptionRepository>();
         services.AddScoped<IChatSessionRepo, ChatSessionRepo>();
+        services.AddSingleton<IEncryptionKeyProvider, KeyVaultEncryptionKeyProvider>();
+        
+        services.AddSingleton<IEncryptionService>(sp =>
+        {
+            var keyProvider = sp.GetRequiredService<IEncryptionKeyProvider>();
+            var logger = sp.GetRequiredService<ILogger<EncryptionService>>();
+    
+            // Pre-load the key 
+            var encryptionService = EncryptionService.CreateAsync(keyProvider, logger)
+                .GetAwaiter()
+                .GetResult();  
+    
+            return encryptionService;
+        });
 
         // Add User Context Service
         services.AddHttpContextAccessor();
