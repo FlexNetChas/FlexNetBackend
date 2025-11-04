@@ -1,6 +1,6 @@
-﻿namespace FlexNet.Application.Models.Records
+﻿namespace FlexNet.Application.DTOs.AI
 {
-    public record StudentContext(
+    public record UserContextDto(
         int Age,
         string? Gender,
         string? Education,

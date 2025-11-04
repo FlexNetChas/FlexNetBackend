@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace FlexNet.Application.Models
 {
-    public abstract record ConversationMessage(string Role, string Content);
+    public record ConversationMessage(string Role, string Content);
 }
