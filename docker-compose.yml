@@ -3,9 +3,9 @@ services:
   database.server:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: database.server
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=Password123!
+    env_file:
+        # Not implemented yet. Need to reed from user secrets??
+      - .env.db
     ports:
       - "1433:1433"
     volumes:
@@ -19,16 +19,15 @@ services:
       retries: 10
       start_period: 10s
 
-  flexnet.api:
+  backend:
     build:
       context: ..
       dockerfile: FlexNetBackend/src/FlexNet.Api/Dockerfile
-    container_name: FlexNet.api
+    container_name: backend
     image: flexnet.api
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=database.server;Database=FlexNetChatManagement_Dev;User=sa;Password=Password123!;TrustServerCertificate=True;MultipleActiveResultSets=true;Encrypt=False
+    env_file:
+        # Not implemented yet. Need to reed from appsettings.Development.json??
+      - .env.backend
     ports:
       - "5000:8080"
     depends_on:
@@ -60,18 +59,12 @@ services:
       dockerfile: Dockerfile
     container_name: frontend
     image: flexnet.frontend
-    environment:
-      - NODE_ENV=development
-      - NEXT_API_BASE_URL=http://flexnet.api:8080/api
-      - NEXT_API_TIMEOUT=5000
-      - NEXT_PUBLIC_LANDINGPAGE_MVC=http://localhost:3000
-      - NEXT_PUBLIC_DOMAIN_PAGE=http://localhost:3000
-      - FORCE_COLOR=1
-
+    env_file:
+      - .env.docker
     ports:
       - "3000:3000"
     depends_on:
-      - flexnet.api
+      - backend
     networks:
       - flexnet-network
     develop:
