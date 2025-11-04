@@ -8,9 +8,13 @@
             {
                 options.AddPolicy("AllowAll", policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(
+                          "http://localhost:3000",           
+                          "http://host.docker.internal:3000" 
+                          )
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                 });
             });
             return services;
