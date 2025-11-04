@@ -53,7 +53,8 @@ namespace FlexNet.Infrastructure.Repositories
             chatSession.EndedTime = entity.EndedTime;
 
             //Might not need this depending on how/if we let users update old chat messages
-            foreach (var message in entity.ChatMessages)
+            var messagesToProcess = entity.ChatMessages.ToList();
+            foreach (var message in messagesToProcess)
             {
                 if (message.Id == 0)
                 {

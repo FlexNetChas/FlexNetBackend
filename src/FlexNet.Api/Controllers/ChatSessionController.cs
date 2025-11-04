@@ -50,7 +50,13 @@ namespace FlexNet.Api.Controllers
             var createdChatSession = await _chatSessionService.CreateAsync(chatSession);
             return StatusCode(201, createdChatSession);
         }
-
+        // End a Session
+        [HttpPost("{sessionId}/end")]
+        public async Task<IActionResult> EndSessionAsync(int sessionId)
+        {
+            var result = await _chatSessionService.EndSessionAsync(sessionId);
+            return Ok(result);
+        }
         // Delete a ChatSession by ID
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteChatSessionAsync(int id)

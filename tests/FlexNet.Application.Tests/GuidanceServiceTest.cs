@@ -1,3 +1,4 @@
+using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Services;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
@@ -18,10 +19,10 @@ namespace FlexNet.Application.Tests
            // ARRANGE
            var userMessage = "I'm feeling unsure of what kind of education I should go after Högstadiet";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new StudentContext(Age: 16, Gender: null, Education: null, Purpose: null);
+           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
 
            var expectedContent = "I understand that it seems unsure but let me help guiding you to your future";
-           var successResult = GuidanceResult.Success(expectedContent);
+           var successResult = Result<string>.Success(expectedContent);
     
            var mockInnerService = new Mock<IGuidanceService>();
            mockInnerService
@@ -36,7 +37,7 @@ namespace FlexNet.Application.Tests
     
            // ASSERT
            Assert.True(result.IsSuccess);
-           Assert.Equal(expectedContent, result.Content);  
+           Assert.Equal(expectedContent, result.Data);  
            Assert.Null(result.Error);
     
            mockInnerService.Verify(
@@ -49,7 +50,7 @@ namespace FlexNet.Application.Tests
            // ARRANGE
            var userMessage = "I'm feeling unsure of what kind of education I should go after Högstadiet";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new StudentContext(Age: 16, Gender: null, Education: null, Purpose: null);
+           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
 
            var expectedContent = "Finally worked!";  
     
@@ -58,7 +59,7 @@ namespace FlexNet.Application.Tests
                .SetupSequence(s => s.GetGuidanceAsync(userMessage, conversationHistory, studentContext))
                .Throws(ServiceException.NetworkError("First failure"))
                .Throws(ServiceException.NetworkError("Second failure"))
-               .ReturnsAsync(GuidanceResult.Success(expectedContent));  
+               .ReturnsAsync(Result<string>.Success(expectedContent));  
            var mockLogger = new Mock<ILogger<GuidanceService>>();
            var guidanceService = new GuidanceService(mockInnerService.Object, mockLogger.Object);
     
@@ -67,7 +68,7 @@ namespace FlexNet.Application.Tests
     
            // ASSERT
            Assert.True(result.IsSuccess);
-           Assert.Equal(expectedContent, result.Content);  
+           Assert.Equal(expectedContent, result.Data);  
            Assert.Null(result.Error);
     
            mockInnerService.Verify(
@@ -76,13 +77,13 @@ namespace FlexNet.Application.Tests
        }
 
        [Fact]
-       public async Task GetGuidanaceAsync_NonRetryableException_ReturnFailureImmediately()
+       public async Task GetGuidanceAsync_NonRetryableException_ReturnFailureImmediately()
        {
            // ARRANGE
 
            var userMessage = "I need help with my future";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new StudentContext(Age: 16, Gender: null, Education: null, Purpose: null);
+           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
            var expectedContent = "Invalid API key";
            
            var mockInnerService = new Mock<IGuidanceService>();
@@ -96,7 +97,7 @@ namespace FlexNet.Application.Tests
            // ASSERT
            
            Assert.False(result.IsSuccess);
-            Assert.Empty(result.Content); 
+            Assert.Empty(result.Data); 
            Assert.NotNull(result.Error);
             Assert.Equal("AUTHENTICATION_ERROR", result.Error.ErrorCode);
             Assert.False(result.Error.CanRetry);

@@ -2,5 +2,5 @@
 
 public record SendMessageRequestDto(
     string Message,
-    int? Age // Optional for now
+    int? ChatSessionId
 );
