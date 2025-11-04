@@ -25,7 +25,7 @@ namespace FlexNet.Api.Exceptions
                 Exception = exception,
                 ProblemDetails = new ProblemDetails
                 {
-                    Detail = "One or more validation errors occurred.",
+                    Detail = exception.Message,
                     Title = "Validation Failed",
                     Status = StatusCodes.Status400BadRequest,
                 }
