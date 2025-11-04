@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Interfaces;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
@@ -28,11 +29,11 @@ public class GeminiGuidanceService : IGuidanceService
     public async Task<Result<string>> GetGuidanceAsync(
         string userMessage,
         IEnumerable<ConversationMessage> conversationHistory,
-        StudentContext studentContext)
+        UserContextDto userContextDto)
     {
         try
         {
-            // Extract raw message from XML context if present
+            // Extract raw message from XML contextDto if present
             var rawMessage = ExtractRawMessage(userMessage);
             
             
@@ -54,14 +55,14 @@ public class GeminiGuidanceService : IGuidanceService
                     _logger.LogInformation("✅ Found {Count} schools from Skolverket", schools.Count);
                     
                     // Build response: Skolverket data + AI advice
-                    return await BuildSchoolResponse(rawMessage, schools, studentContext);
+                    return await BuildSchoolResponse(rawMessage, schools, userContextDto);
                 }
 
-                return await BuildNoResultsResponse(rawMessage, schoolRequest, studentContext);
+                return await BuildNoResultsResponse(rawMessage, schoolRequest, userContextDto);
             }
 
             // Regular counseling - no school search needed
-            return await GetRegularGuidance(userMessage, studentContext);
+            return await GetRegularGuidance(userMessage, userContextDto);
         }
         catch (Exception ex)
         {
@@ -75,7 +76,7 @@ public class GeminiGuidanceService : IGuidanceService
     private async Task<Result<string>> BuildSchoolResponse(
         string userMessage,
         List<Domain.Entities.Schools.School> schools,
-        StudentContext studentContext)
+        UserContextDto userContextDto)
     {
         var response = new StringBuilder();
         
@@ -84,7 +85,7 @@ public class GeminiGuidanceService : IGuidanceService
         var aiAdvice = await GetPersonalizedSchoolAdvice(
             userMessage, 
             schools, 
-            studentContext);
+            userContextDto);
         
         response.AppendLine("---\n");
         response.AppendLine(aiAdvice); 
@@ -133,15 +134,15 @@ public class GeminiGuidanceService : IGuidanceService
     private async Task<string> GetPersonalizedSchoolAdvice(
         string userMessage,
         List<Domain.Entities.Schools.School> schools,
-        StudentContext studentContext)
+        UserContextDto userContextDto)
     {
         var prompt = new StringBuilder();
         
-        prompt.AppendLine($"En {studentContext.Age}-årig elev frågade: '{userMessage}'");
+        prompt.AppendLine($"En {userContextDto.Age}-årig elev frågade: '{userMessage}'");
         prompt.AppendLine();
         prompt.AppendLine($"Jag har visat dem {schools.Count} gymnasieskolor från Skolverkets officiella register:");
         
-        // Give AI context about which schools
+        // Give AI contextDto about which schools
         foreach (var school in schools.Take(3))
         {
             prompt.AppendLine($"- {school.Name} i {school.Municipality}");
@@ -176,11 +177,11 @@ public class GeminiGuidanceService : IGuidanceService
     private async Task<Result<string>> BuildNoResultsResponse(
         string userMessage,
         SchoolRequestInfo request,
-        StudentContext studentContext)
+        UserContextDto userContextDto)
     {
         var prompt = new StringBuilder();
         
-        prompt.AppendLine($"En {studentContext.Age}-årig elev frågade: '{userMessage}'");
+        prompt.AppendLine($"En {userContextDto.Age}-årig elev frågade: '{userMessage}'");
         prompt.AppendLine();
         prompt.AppendLine("Jag sökte i Skolverkets databas men hittade inga skolor som matchar:");
         
@@ -208,7 +209,7 @@ public class GeminiGuidanceService : IGuidanceService
 
     private async Task<Result<string>> GetRegularGuidance(
         string userMessage,
-        StudentContext studentContext)
+        UserContextDto userContextDto)
     {
         var rawMessage = ExtractRawMessage(userMessage);
     
@@ -220,9 +221,9 @@ public class GeminiGuidanceService : IGuidanceService
     
         if (isSchoolQuery)
         {
-            // Give AI context to ask the right questions
+            // Give AI contextDto to ask the right questions
             prompt = $"""
-                      En {studentContext.Age}-årig elev frågade: '{rawMessage}'
+                      En {userContextDto.Age}-årig elev frågade: '{rawMessage}'
 
                       Eleven är intresserad av gymnasieutbildning men har inte varit specifik ännu.
 
@@ -269,22 +270,20 @@ public class GeminiGuidanceService : IGuidanceService
     }
 
 
-    private string ExtractRawMessage(string message)
+    private static string ExtractRawMessage(string message)
     {
-        if (message.Contains("<current_message>"))
+        if (!message.Contains("<current_message>")) return message;
+        var startTag = "<current_message>";
+        var endTag = "</current_message>";
+            
+        var startIndex = message.IndexOf(startTag) + startTag.Length;
+        var endIndex = message.IndexOf(endTag);
+            
+        if (startIndex > 0 && endIndex > startIndex)
         {
-            var startTag = "<current_message>";
-            var endTag = "</current_message>";
-            
-            var startIndex = message.IndexOf(startTag) + startTag.Length;
-            var endIndex = message.IndexOf(endTag);
-            
-            if (startIndex > 0 && endIndex > startIndex)
-            {
-                return message.Substring(startIndex, endIndex - startIndex).Trim();
-            }
+            return message.Substring(startIndex, endIndex - startIndex).Trim();
         }
-        
+
         return message;
     }
 
@@ -383,6 +382,115 @@ public class GeminiGuidanceService : IGuidanceService
             return null;  
         }
         return request;
+    }
+    
+    public async Task<Result<string>> GenerateTitleAsync(
+        IEnumerable<ConversationMessage> conversationHistory,
+        UserContextDto? userContextDto)
+    {
+        try
+        {
+            // 1. Build the prompt for title generation
+            var prompt = BuildTitlePrompt(conversationHistory);
+            _logger.LogInformation("Generating chat title from {Count} messages", conversationHistory.Count());
+        
+            // 2. Call Gemini API (similar to GetGuidanceAsync)
+            var result = await CallGeminiApiAsync(prompt);
+            if (!result.IsSuccess)
+            {
+                _logger.LogWarning("failed to generate title: {Error}", result.Error?.Message);
+                return result;
+            }
+
+            // 3. Extract and clean the title
+            var title = CleanTitle(result.Data);
+            _logger.LogInformation("Generated title: '{Title}'", title);
+
+            // 4. Return Result.Success(title)
+            return Result<string>.Success(title);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating chat title");
+            return Result<string>.Failure(new ErrorInfo(
+                ErrorCode: "TITLE_GENERATION_ERROR",
+                Message: $"Failed to generate chat title: {ex.Message}",
+                CanRetry: false,
+                RetryAfter: null));
+        }
+    }
+    private static string CleanTitle(string rawTitle)
+    {
+        var cleaned = rawTitle.Trim();
+    
+        // Remove surrounding quotes if present
+        if ((cleaned.StartsWith("\"") && cleaned.EndsWith("\"")) ||
+            (cleaned.StartsWith("'") && cleaned.EndsWith("'")))
+        {
+            cleaned = cleaned.Substring(1, cleaned.Length - 2).Trim();
+        }
+    
+        // Limit length (safety check)
+        if (cleaned.Length > 100)
+        {
+            cleaned = cleaned.Substring(0, 97) + "...";
+        }
+    
+        return cleaned;
+    }
+    private static string BuildTitlePrompt(IEnumerable<ConversationMessage> history)
+    {
+        var sb = new StringBuilder();
+    
+        sb.AppendLine("Based on the conversation below, generate a short, descriptive title (5-8 words maximum).");
+        sb.AppendLine("The title should capture the main topic or purpose of the conversation.");
+        sb.AppendLine("Respond with ONLY the title, no quotes, no explanation.");
+        sb.AppendLine();
+        sb.AppendLine("Conversation:");
+    
+        foreach (var message in history)
+        {
+            sb.AppendLine($"{message.Role}: {message.Content}");
+        }
+    
+        sb.AppendLine();
+        sb.AppendLine("Title:");
+    
+        return sb.ToString();
+    }
+    
+    private async Task<Result<string>> CallGeminiApiAsync(string prompt)
+    {
+        try
+        {
+            _logger.LogDebug("Calling Gemini API with prompt length: {Length}", prompt.Length);
+        
+            var apiKey = await _apiKeyProvider.GetApiKeyAsync();
+            var model = new GenerativeModel() { ApiKey = apiKey };
+            var response = await model.GenerateContent(prompt);
+        
+            if (string.IsNullOrWhiteSpace(response.Text))
+            {
+                _logger.LogWarning("Gemini returned empty response");
+                return Result<string>.Failure(new ErrorInfo(
+                    ErrorCode: "EMPTY_RESPONSE",
+                    Message: "AI returned an empty response",
+                    CanRetry: false,
+                    RetryAfter: null));
+            }
+        
+            _logger.LogDebug("Gemini API call successful, response length: {Length}", response.Text.Length);
+            return Result<string>.Success(response.Text.Trim());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Gemini API call failed");
+            return Result<string>.Failure(new ErrorInfo(
+                ErrorCode: "GEMINI_API_ERROR",
+                Message: $"Failed to generate content: {ex.Message}",
+                CanRetry: true,
+                RetryAfter: null));
+        }
     }
 
     /// Helper class for detected school search criteria
