@@ -9,6 +9,7 @@ public class SkolverketApiClient : ISkolverketApiClient
 {
     private readonly HttpClient _client;
     private readonly ILogger<SkolverketApiClient> _logger;
+    // If needed, remove the school_type=GY to filter all schools instead of only Gymnasium. 
     private const string ListEndpoint = "v2/school-units?school_type=GY&status=AKTIV";
     private const string DetailEndpointTemplate = "v2/school-units/{0}";
 

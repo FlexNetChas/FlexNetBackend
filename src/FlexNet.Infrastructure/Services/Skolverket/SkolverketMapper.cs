@@ -3,7 +3,7 @@ using FlexNet.Domain.Entities.Schools;
 using FlexNet.Infrastructure.Services.Skolverket.DTOs;
 using Microsoft.Extensions.Logging;
 using static System.Double;
-
+using System.Globalization;
 namespace FlexNet.Infrastructure.Services.Skolverket;
 
 public class SkolverketMapper
@@ -140,8 +140,8 @@ public class SkolverketMapper
             string.IsNullOrWhiteSpace(geoCoordinates.Longitude))
             return null;
     
-        var latSuccess = double.TryParse(geoCoordinates.Latitude, out var latitude);
-        var lonSuccess = double.TryParse(geoCoordinates.Longitude, out var longitude);
+        var latSuccess = double.TryParse(geoCoordinates.Latitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude);
+        var lonSuccess = double.TryParse(geoCoordinates.Longitude,NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude);
     
         if (!latSuccess || !lonSuccess)
         {

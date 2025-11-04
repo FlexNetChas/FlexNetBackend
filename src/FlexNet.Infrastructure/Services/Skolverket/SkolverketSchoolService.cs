@@ -213,7 +213,7 @@ public class SkolverketSchoolService : ISchoolService
 
         if (school == null)
         {
-            _logger.LogWarning("Mapper returned null for school {Code]", schoolUnitCode);
+            _logger.LogWarning("Mapper returned null for school {Code}", schoolUnitCode);
         }
         return school;
     }
@@ -234,16 +234,16 @@ public class SkolverketSchoolService : ISchoolService
         _logger.LogDebug("After municipality filter: {Count} schools remaining", query.Count());
     }
 
-    // Filter by program codes (with null safety!)
+    // Filter by program codes 
     if (criteria.ProgramCodes?.Any() == true)
     {
         _logger.LogDebug("Filtering by programs: {Programs}", string.Join(",", criteria.ProgramCodes));
         
         query = query.Where(s => 
-            s.Programs != null &&  // ⭐ NULL CHECK!
+            s.Programs != null &&  
             s.Programs.Any(p => 
-                p != null &&  // ⭐ NULL CHECK!
-                !string.IsNullOrEmpty(p.Code) &&  // ⭐ NULL CHECK!
+                p != null &&  
+                !string.IsNullOrEmpty(p.Code) && 
                 criteria.ProgramCodes.Contains(p.Code)));
         
         _logger.LogDebug("After program filter: {Count} schools remaining", query.Count());
