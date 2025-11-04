@@ -25,5 +25,6 @@ namespace FlexNet.Api.Controllers
             var response = await _sendMessage.ExecuteAsync(request);
             return Ok(response);
         }
+        
     }
 }
