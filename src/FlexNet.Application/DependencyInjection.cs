@@ -4,6 +4,7 @@ using FlexNet.Application.UseCases;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using FlexNet.Application.Services.Security;
 
 namespace FlexNet.Application
 {
@@ -17,7 +18,8 @@ namespace FlexNet.Application
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IChatSessionService, ChatSessionService>();
             services.AddScoped<IUserDescriptionService, UserDescriptionService>();
-
+            services.AddScoped<IInputSanitizer, InputSanitizer>();
+            services.AddScoped<IOutputValidator,  OutputValidator>();
             services.AddScoped<AiContextBuilder>();
 
             /* Register FluentValidation validators from Application assembly.
