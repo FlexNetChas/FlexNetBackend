@@ -1,3 +1,4 @@
+using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Services;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
@@ -18,7 +19,7 @@ namespace FlexNet.Application.Tests
            // ARRANGE
            var userMessage = "I'm feeling unsure of what kind of education I should go after Högstadiet";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new StudentContext(Age: 16, Gender: null, Education: null, Purpose: null);
+           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
 
            var expectedContent = "I understand that it seems unsure but let me help guiding you to your future";
            var successResult = Result<string>.Success(expectedContent);
@@ -49,7 +50,7 @@ namespace FlexNet.Application.Tests
            // ARRANGE
            var userMessage = "I'm feeling unsure of what kind of education I should go after Högstadiet";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new StudentContext(Age: 16, Gender: null, Education: null, Purpose: null);
+           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
 
            var expectedContent = "Finally worked!";  
     
@@ -76,13 +77,13 @@ namespace FlexNet.Application.Tests
        }
 
        [Fact]
-       public async Task GetGuidanaceAsync_NonRetryableException_ReturnFailureImmediately()
+       public async Task GetGuidanceAsync_NonRetryableException_ReturnFailureImmediately()
        {
            // ARRANGE
 
            var userMessage = "I need help with my future";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new StudentContext(Age: 16, Gender: null, Education: null, Purpose: null);
+           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
            var expectedContent = "Invalid API key";
            
            var mockInnerService = new Mock<IGuidanceService>();
