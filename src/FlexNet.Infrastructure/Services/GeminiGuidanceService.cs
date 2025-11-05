@@ -5,6 +5,7 @@ using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
 using FlexNet.Application.Exceptions;
+using FlexNet.Application.Services;
 using FlexNet.Application.Services.Formatters;
 using Mscc.GenerativeAI;
 using Microsoft.Extensions.Logging;
@@ -17,16 +18,20 @@ public class GeminiGuidanceService : IGuidanceService
     private readonly ISchoolService _schoolService;
     private readonly ILogger<GeminiGuidanceService> _logger;
     private readonly SchoolResponseFormatter _formatter;
+    private readonly SchoolSearchDetector _detector;
 
     public GeminiGuidanceService(
         IApiKeyProvider apiKeyProvider,
         ISchoolService schoolService,
-        ILogger<GeminiGuidanceService> logger, SchoolResponseFormatter formatter)
+        ILogger<GeminiGuidanceService> logger, 
+        SchoolResponseFormatter formatter, 
+        SchoolSearchDetector detector)
     {
         _apiKeyProvider = apiKeyProvider ?? throw new ArgumentNullException(nameof(apiKeyProvider));
         _schoolService = schoolService ?? throw new ArgumentNullException(nameof(schoolService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _formatter = formatter;
+        _formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
+        _detector = detector ?? throw new ArgumentNullException(nameof(detector));
     }
 
     public async Task<Result<string>> GetGuidanceAsync(
@@ -41,7 +46,7 @@ public class GeminiGuidanceService : IGuidanceService
             
             
             // Detect if this is a school-related query
-            var schoolRequest = DetectSchoolRequest(rawMessage);
+            var schoolRequest = _detector.DetectSchoolRequest(rawMessage);
             
             if (schoolRequest != null)
             {
@@ -250,103 +255,6 @@ public class GeminiGuidanceService : IGuidanceService
 
         return message;
     }
-
-
-    private SchoolRequestInfo? DetectSchoolRequest(string message)
-    {
-        var lowerMessage = message.ToLowerInvariant();
-        
-        // Keywords indicating school search
-        var schoolKeywords = new[] 
-        { 
-            "school", "skola", "skolor", "gymnasium", "gymnasiet",
-            "recommend", "rekommendera", "suggest", "föreslå",
-            "where", "var", "which", "vilken", "vilka",
-            "study", "studera", "plugga", "läsa",
-            "show", "visa", "list", "lista",
-            "find", "hitta", "search", "sök"
-        };
-        
-        if (!schoolKeywords.Any(keyword => lowerMessage.Contains(keyword)))
-            return null;
-        
-        var request = new SchoolRequestInfo();
-        
-        // Extract municipality
-        var municipalities = new Dictionary<string, string[]>
-        {
-            ["Stockholm"] = new[] { "stockholm" },
-            ["Göteborg"] = new[] { "göteborg", "gothenburg", "goteborg" },
-            ["Malmö"] = new[] { "malmö", "malmo" },
-            ["Uppsala"] = new[] { "uppsala" },
-            ["Lund"] = new[] { "lund" },
-            ["Linköping"] = new[] { "linköping", "linkoping" },
-            ["Västerås"] = new[] { "västerås", "vasteras" },
-            ["Örebro"] = new[] { "örebro", "orebro" },
-            ["Norrköping"] = new[] { "norrköping", "norrkoping" },
-            ["Helsingborg"] = new[] { "helsingborg" },
-            ["Jönköping"] = new[] { "jönköping", "jonkoping" },
-            ["Umeå"] = new[] { "umeå", "umea" },
-            ["Luleå"] = new[] { "luleå", "lulea" },
-            ["Borås"] = new[] { "borås", "boras" },
-            ["Eskilstuna"] = new[] { "eskilstuna" },
-            ["Gävle"] = new[] { "gävle", "gavle" },
-            ["Sundsvall"] = new[] { "sundsvall" },
-            ["Södertälje"] = new[] { "södertälje", "sodertalje" }
-        };
-        
-        foreach (var (municipality, variants) in municipalities)
-        {
-            if (variants.Any(v => lowerMessage.Contains(v)))
-            {
-                request.Municipality = municipality;
-                break;
-            }
-        }
-        
-        // Extract program interests
-        var programKeywords = new Dictionary<string, string[]>
-        {
-            ["TE"] = new[] { "technology", "teknik", "tech", "teknikprogrammet" },
-            ["NA"] = new[] { "naturvetenskap", "natural science", "naturvetenskapsprogrammet" },
-            ["SA"] = new[] { "samhällsvetenskap", "social science", "samhällsvetenskapsprogrammet" },
-            ["EK"] = new[] { "ekonomi", "economics", "business", "ekonomiprogrammet" },
-            ["ES"] = new[] { "estetisk", "arts", "konst", "musik", "estetiska programmet" },
-            ["HU"] = new[] { "humanistisk", "humanities", "humanistiska programmet" },
-            ["BA"] = new[] { "barn och fritid", "barn- och fritidsprogrammet" },
-            ["BF"] = new[] { "bygg och anläggning", "construction", "bygg- och anläggningsprogrammet" },
-            ["EE"] = new[] { "el och energi", "electricity", "el- och energiprogrammet" },
-            ["FT"] = new[] { "fordon", "vehicle", "fordonsprogrammet" },
-            ["HA"] = new[] { "hantverk", "craft", "hantverksprogrammet" },
-            ["HT"] = new[] { "handel och administration", "handels- och administrationsprogrammet" },
-            ["IN"] = new[] { "industri", "industrial", "industritekniska programmet" },
-            ["RL"] = new[] { "restaurang och livsmedel", "restaurang- och livsmedelsprogrammet" },
-            ["VF"] = new[] { "vård och omsorg", "care", "nursing", "vård- och omsorgsprogrammet" }
-        };
-        
-        var detectedPrograms = new List<string>();
-        var messageWithSpaces = " " + lowerMessage + " ";
- 
-        foreach (var (code, keywords) in programKeywords)
-        {
-            if (keywords.Any(k => messageWithSpaces.Contains(k)))
-            {
-                detectedPrograms.Add(code);
-            }
-        }
-        
-        if (detectedPrograms.Any())
-        {
-            request.ProgramCodes = detectedPrograms;
-        }
-        if (request.Municipality == null && (request.ProgramCodes == null || !request.ProgramCodes.Any()))
-        {
-            _logger.LogInformation("Query too vague - needs location OR program");
-
-            return null;  
-        }
-        return request;
-    }
     
     public async Task<Result<string>> GenerateTitleAsync(
         IEnumerable<ConversationMessage> conversationHistory,
@@ -457,11 +365,4 @@ public class GeminiGuidanceService : IGuidanceService
         }
     }
 
-    /// Helper class for detected school search criteria
-   
-    private class SchoolRequestInfo
-    {
-        public string? Municipality { get; set; }
-        public List<string>? ProgramCodes { get; set; }
-    }
 }

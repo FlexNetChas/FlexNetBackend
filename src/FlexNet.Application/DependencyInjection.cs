@@ -4,6 +4,7 @@ using FlexNet.Application.UseCases;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using FlexNet.Application.Configuration;
 using FlexNet.Application.Security;
 using FlexNet.Application.Services.Factories;
 using FlexNet.Application.Services.Formatters;
@@ -27,6 +28,8 @@ namespace FlexNet.Application
             services.AddScoped<ChatMessageCreator>();
             services.AddScoped<ConversationContextbuilder>();
             services.AddScoped<SchoolResponseFormatter>();
+            services.AddSingleton<SchoolSearchConfiguration>();
+            services.AddScoped<SchoolSearchDetector>();
 
             /* Register FluentValidation validators from Application assembly.
              * AddValidatorsFromAssembly is an extension method from FluentValidation that scans 
