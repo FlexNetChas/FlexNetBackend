@@ -24,6 +24,7 @@ namespace FlexNet.Application.UseCases
         private readonly IInputSanitizer _inputSanitizer;
         private readonly IOutputValidator _outputValidator;
         private readonly ChatMessageCreator _chatMessageCreator;
+        private readonly ConversationContextbuilder _contextBuilder;
 
 
         public SendCounsellingMessage(
@@ -31,7 +32,7 @@ namespace FlexNet.Application.UseCases
             AiContextBuilder aiContextBuilder, 
             IChatSessionRepo chatSessionRepo, 
             IUserDescriptionRepo userDescriptionRepo,
-            IUserContextService userContextService, ILogger<SendCounsellingMessage> logger, IInputSanitizer inputSanitizer, IOutputValidator outputValidator, ChatMessageCreator chatMessageCreator)
+            IUserContextService userContextService, ILogger<SendCounsellingMessage> logger, IInputSanitizer inputSanitizer, IOutputValidator outputValidator, ChatMessageCreator chatMessageCreator, ConversationContextbuilder contextBuilder)
         {
             _guidanceService = guidanceService ?? throw new ArgumentNullException(nameof(guidanceService));
             _aiContextBuilder = aiContextBuilder ?? throw new ArgumentNullException(nameof(aiContextBuilder));
@@ -42,6 +43,7 @@ namespace FlexNet.Application.UseCases
             _inputSanitizer = inputSanitizer;
             _outputValidator = outputValidator;
             _chatMessageCreator = chatMessageCreator;
+            _contextBuilder = contextBuilder;
         }
 
         public async Task<SendMessageResponseDto> ExecuteAsync(SendMessageRequestDto request)
@@ -77,11 +79,7 @@ namespace FlexNet.Application.UseCases
 
             var userContext = userDescription.ToUserContextDto();
             
-            var conversationHistory = session.ChatMessages
-                .OrderBy(m => m.TimeStamp)
-                .TakeLast(10)
-                .Select(m => new ConversationMessage(Role:  m.Role, Content: m.MessageText) )
-                .ToList();
+            var conversationHistory = _contextBuilder.BuildHistory(session.ChatMessages);
 
     
             var contextMessage = _aiContextBuilder.BuildContext(

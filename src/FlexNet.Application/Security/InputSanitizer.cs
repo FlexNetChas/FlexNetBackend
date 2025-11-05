@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using FlexNet.Application.Interfaces.IServices;
 using Microsoft.Extensions.Logging;
 
-namespace FlexNet.Application.Services.Security;
+namespace FlexNet.Application.Security;
 
 public class InputSanitizer : IInputSanitizer
 {
