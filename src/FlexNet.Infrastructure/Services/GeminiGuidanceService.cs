@@ -5,6 +5,7 @@ using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
 using FlexNet.Application.Exceptions;
+using FlexNet.Application.Services.Formatters;
 using Mscc.GenerativeAI;
 using Microsoft.Extensions.Logging;
 
@@ -15,15 +16,17 @@ public class GeminiGuidanceService : IGuidanceService
     private readonly IApiKeyProvider _apiKeyProvider;
     private readonly ISchoolService _schoolService;
     private readonly ILogger<GeminiGuidanceService> _logger;
+    private readonly SchoolResponseFormatter _formatter;
 
     public GeminiGuidanceService(
         IApiKeyProvider apiKeyProvider,
         ISchoolService schoolService,
-        ILogger<GeminiGuidanceService> logger)
+        ILogger<GeminiGuidanceService> logger, SchoolResponseFormatter formatter)
     {
         _apiKeyProvider = apiKeyProvider ?? throw new ArgumentNullException(nameof(apiKeyProvider));
         _schoolService = schoolService ?? throw new ArgumentNullException(nameof(schoolService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _formatter = formatter;
     }
 
     public async Task<Result<string>> GetGuidanceAsync(
@@ -78,56 +81,17 @@ public class GeminiGuidanceService : IGuidanceService
         List<Domain.Entities.Schools.School> schools,
         UserContextDto userContextDto)
     {
-        var response = new StringBuilder();
         
-        // Part 1: AI-generated personalized advice
+        // Part 1: Get AI-generated advice
+
+        var aiAdvice = await GetPersonalizedSchoolAdvice(userMessage, schools, userContextDto);
         
-        var aiAdvice = await GetPersonalizedSchoolAdvice(
-            userMessage, 
-            schools, 
-            userContextDto);
+        // Part 2: Format with schools 
+        var formattedResponse = _formatter.FormatSchoolList(aiAdvice, schools);
+
+        _logger.LogInformation("✅ Complete response built: {Chars} characters",formattedResponse.Length);
         
-        response.AppendLine("---\n");
-        response.AppendLine(aiAdvice); 
-        
-        // Part 2: School list from Skolverket 
-        response.AppendLine("---\n");
-        response.AppendLine("**Skolor från Skolverkets officiella register:**\n");
-        
-        foreach (var school in schools)
-        {
-            response.AppendLine($"### {school.Name}");
-            response.AppendLine($"📍 **Kommun:** {school.Municipality}");
-            
-            // Programs
-            if (school.Programs.Any())
-            {
-                var programList = string.Join(", ", school.Programs.Take(3).Select(p => p.Name));
-                response.AppendLine($"📚 **Program:** {programList}");
-            }
-            
-            // Contact information
-            if (!string.IsNullOrEmpty(school.WebsiteUrl))
-                response.AppendLine($"🌐 **Webbsida:** {school.WebsiteUrl}");
-            
-            if (!string.IsNullOrEmpty(school.Phone))
-                response.AppendLine($"📞 **Telefon:** {school.Phone}");
-            
-            if (!string.IsNullOrEmpty(school.Email))
-                response.AppendLine($"✉️ **E-post:** {school.Email}");
-            
-            // Address
-            if (school.VisitingAddress != null)
-            {
-                response.AppendLine($"📍 **Adress:** {school.VisitingAddress.StreetAddress}, " +
-                                  $"{school.VisitingAddress.PostalCode} {school.VisitingAddress.Locality}");
-            }
-            
-            response.AppendLine(); 
-        }
-        _logger.LogInformation("✅ Complete response built: {Chars} characters", response.Length);
-        
-        return Result<string>.Success(response.ToString());
+        return Result<string>.Success(formattedResponse);
     }
 
  
