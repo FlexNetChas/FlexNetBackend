@@ -6,6 +6,7 @@ using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
 using FlexNet.Application.Services;
+using FlexNet.Application.Services.Factories;
 using FlexNet.Application.Services.Security;
 using FlexNet.Domain.Entities;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,7 @@ namespace FlexNet.Application.UseCases
         private readonly ILogger<SendCounsellingMessage> _logger;
         private readonly IInputSanitizer _inputSanitizer;
         private readonly IOutputValidator _outputValidator;
+        private readonly ChatMessageCreator _chatMessageCreator;
 
 
         public SendCounsellingMessage(
@@ -29,7 +31,7 @@ namespace FlexNet.Application.UseCases
             AiContextBuilder aiContextBuilder, 
             IChatSessionRepo chatSessionRepo, 
             IUserDescriptionRepo userDescriptionRepo,
-            IUserContextService userContextService, ILogger<SendCounsellingMessage> logger, IInputSanitizer inputSanitizer, IOutputValidator outputValidator)
+            IUserContextService userContextService, ILogger<SendCounsellingMessage> logger, IInputSanitizer inputSanitizer, IOutputValidator outputValidator, ChatMessageCreator chatMessageCreator)
         {
             _guidanceService = guidanceService ?? throw new ArgumentNullException(nameof(guidanceService));
             _aiContextBuilder = aiContextBuilder ?? throw new ArgumentNullException(nameof(aiContextBuilder));
@@ -39,6 +41,7 @@ namespace FlexNet.Application.UseCases
             _logger = logger;
             _inputSanitizer = inputSanitizer;
             _outputValidator = outputValidator;
+            _chatMessageCreator = chatMessageCreator;
         }
 
         public async Task<SendMessageResponseDto> ExecuteAsync(SendMessageRequestDto request)
@@ -100,23 +103,17 @@ namespace FlexNet.Application.UseCases
                     var fallbackResponse = _outputValidator.GetSafeFallbackResponse();
             
                     // Still save messages but with safe response
-                    var chatMessage = new ChatMessage
-                    {
-                        TimeStamp = DateTime.UtcNow,
-                        ChatSessionId = session.Id.Value,
-                        MessageText = sanitizedMessage,  // ← Save sanitized version
-                        Role = MessageRoles.User
-                    };
+               
+                    var userChatMessage = _chatMessageCreator.Create(
+                        session.Id.Value,
+                        sanitizedMessage,
+                            MessageRoles.User);
 
-                    var aiChatMessage = new ChatMessage
-                    {
-                        TimeStamp = DateTime.UtcNow,
-                        ChatSessionId = session.Id.Value,
-                        MessageText = fallbackResponse,  // ← Save safe fallback
-                        Role = MessageRoles.Assistant
-                    };
-            
-                    session.ChatMessages.Add(chatMessage);
+                    var aiChatMessage = _chatMessageCreator.Create(
+                        session.Id.Value,
+                        sanitizedMessage,
+                        MessageRoles.Assistant);
+                    session.ChatMessages.Add(userChatMessage);
                     session.ChatMessages.Add(aiChatMessage);
             
                     var totalMessages = session.ChatMessages.Count;
@@ -134,22 +131,17 @@ namespace FlexNet.Application.UseCases
                         RetryAfter: null
                     );
                 }
-                var userMessage = new ChatMessage
-                {
-                    TimeStamp = DateTime.UtcNow,
-                    ChatSessionId = session.Id.Value,
-                    MessageText    = request.Message,
-                    Role = MessageRoles.User
-                };
 
-                var aiMessage = new ChatMessage
-                {
-                    TimeStamp = DateTime.UtcNow,
-                    ChatSessionId = session.Id.Value,
-                    MessageText    = result.Data!,
-                    Role = MessageRoles.Assistant
+                var userMessage = _chatMessageCreator.Create(
+                    session.Id.Value,
+                    sanitizedMessage,
+                    MessageRoles.User);
 
-                };
+                var aiMessage = _chatMessageCreator.Create(
+                    session.Id.Value,
+                    result.Data!,
+                    MessageRoles.Assistant);
+                
                 session.ChatMessages.Add(userMessage);
                 session.ChatMessages.Add(aiMessage);
 
