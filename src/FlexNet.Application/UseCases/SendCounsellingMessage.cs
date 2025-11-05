@@ -48,7 +48,6 @@ namespace FlexNet.Application.UseCases
 
         public async Task<SendMessageResponseDto> ExecuteAsync(SendMessageRequestDto request)
         {
-           
 
             if (string.IsNullOrWhiteSpace(request.Message))
             {
@@ -126,7 +125,8 @@ namespace FlexNet.Application.UseCases
                         IsSuccess: true,
                         ErrorCode: null,
                         CanRetry: false,
-                        RetryAfter: null
+                        RetryAfter: null,
+                        SessionId: session.Id.Value
                     );
                 }
 
@@ -153,7 +153,8 @@ namespace FlexNet.Application.UseCases
                         IsSuccess: true,
                         ErrorCode: null,
                         CanRetry: false,
-                        RetryAfter: null
+                        RetryAfter: null,
+                        SessionId: session.Id.Value
                     );
                 var historyForTitle = new List<ConversationMessage>
                 {
@@ -186,7 +187,8 @@ namespace FlexNet.Application.UseCases
                     IsSuccess: true,
                     ErrorCode: null,
                     CanRetry: false,
-                    RetryAfter: null
+                    RetryAfter: null,
+                    SessionId: session.Id.Value
                 );
             }
             else
@@ -196,7 +198,8 @@ namespace FlexNet.Application.UseCases
                     IsSuccess: false,
                     ErrorCode: result.Error?.ErrorCode,
                     CanRetry: result.Error?.CanRetry ?? false,
-                    RetryAfter: result.Error?.RetryAfter
+                    RetryAfter: result.Error?.RetryAfter,
+                    SessionId: session.Id.Value
                 );
             }
         }
