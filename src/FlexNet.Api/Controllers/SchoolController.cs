@@ -3,6 +3,9 @@ using FlexNet.Application.Models.Records;
 using FlexNet.Domain.Entities.Schools;
 using Microsoft.AspNetCore.Mvc;
 
+// [Authorize] not needed on controllers — the fallback policy already requires authentication for all endpoints.
+// Only endpoints marked with [AllowAnonymous] are accessible without authentication, aka Public Routes...
+
 namespace FlexNet.Api.Controllers;
 
 [ApiController]

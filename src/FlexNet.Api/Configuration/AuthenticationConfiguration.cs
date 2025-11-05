@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
@@ -34,6 +35,17 @@ namespace FlexNet.Api.Configuration
                 };
             });
 
+            // Fallback ensures all endpoints require authentication by default
+            // Only [AllowAnonymous] decorated endpoints bypass this
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+
+                // Options to add custom policies for roles, claims, etc. can be added here
+
+            });
             return services;
         }
     }
