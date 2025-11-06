@@ -4,6 +4,7 @@ using FlexNet.Application.Interfaces;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Services;
+using FlexNet.Application.Services.Formatters;
 using FlexNet.Infrastructure.Data;
 using FlexNet.Infrastructure.Interfaces;
 using FlexNet.Infrastructure.Repositories;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using FlexNet.Infrastructure.Security;
+using FlexNet.Infrastructure.Services.Gemini;
 using FlexNet.Infrastructure.Services.Skolverket;
 
 namespace FlexNet.Infrastructure;
@@ -32,7 +34,8 @@ public static class DependencyInjection
         services.AddScoped<IUserDescriptionRepo, UserDescriptionRepository>();
         services.AddScoped<IChatSessionRepo, ChatSessionRepo>();
         services.AddSingleton<IEncryptionKeyProvider, KeyVaultEncryptionKeyProvider>();
-        
+        services.AddScoped<SchoolResponseFormatter>();
+        services.AddScoped<IAiClient, GeminiApiClient>();
         services.AddSingleton<IEncryptionService>(sp =>
         {
             var keyProvider = sp.GetRequiredService<IEncryptionKeyProvider>();

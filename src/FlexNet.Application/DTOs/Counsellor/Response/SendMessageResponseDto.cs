@@ -5,5 +5,6 @@ public record SendMessageResponseDto(
     bool IsSuccess,
     string? ErrorCode,
     bool CanRetry,
-    int? RetryAfter
+    int? RetryAfter,
+    int SessionId
 );
