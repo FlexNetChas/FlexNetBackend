@@ -77,7 +77,8 @@ namespace FlexNet.Application.Services
                     {
                         MessageText = m.MessageText,
                         TimeStamp = m.TimeStamp,
-                        LastUpdated = m.LastUpdated
+                        LastUpdated = m.LastUpdated,
+                        Role = m.Role
                     };
 
                     if (m.Id.HasValue)
@@ -131,7 +132,7 @@ namespace FlexNet.Application.Services
                 session.StartedTime,
                 session.EndedTime,
                 session.ChatMessages.Select(m => new ChatMessageResponseDto(
-                    m.Id, m.MessageText, m.TimeStamp, m.LastUpdated
+                    m.Id, m.MessageText, m.TimeStamp, m.LastUpdated, m.Role
                 )).ToList()
             );
         }
