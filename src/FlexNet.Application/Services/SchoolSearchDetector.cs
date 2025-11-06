@@ -9,6 +9,7 @@ public class SchoolSearchDetector
    private readonly SchoolSearchConfiguration _config;
    private readonly ILogger<SchoolSearchDetector> _logger;
 
+   // This might need configuration, if no words matchen in the message then it will not search for any kind of education
    private static readonly string[] SchoolKeywords = new[]
    {
       "skola", "school", "gymnasium", "program", "universitet", "university", "folkhögskola", "komvux",
