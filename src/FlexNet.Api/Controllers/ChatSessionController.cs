@@ -64,7 +64,7 @@ namespace FlexNet.Api.Controllers
         public async Task<IActionResult> DeleteChatSessionAsync(int id)
         {
             await _chatSessionService.DeleteAsync(id);
-            return NoContent();
+            return Ok();
         }
     }
 }
