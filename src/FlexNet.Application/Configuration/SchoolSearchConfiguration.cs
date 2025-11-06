@@ -8,7 +8,7 @@ public class SchoolSearchConfiguration
     
             public SchoolSearchConfiguration()
         {
-            // TODO: Replace with Skolverket API in Phase 2
+            // TODO: Replace with Skolverket 
             Municipalities = new Dictionary<string, string[]>
             {
                 ["Stockholm"] = ["stockholm"],
@@ -31,7 +31,7 @@ public class SchoolSearchConfiguration
                 ["Södertälje"] = ["södertälje", "sodertalje"]
             };
             
-            // TODO: Replace with Skolverket API in Phase 2
+            // TODO: Replace with Skolverket API 
             ProgramKeywords = new Dictionary<string, string[]>
             {
                 ["TE"] = ["technology", "teknik", "tech", "teknikprogrammet"],

@@ -1,3 +1,4 @@
+using FlexNet.Application.DTOs.School.Request;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models.Records;
 using FlexNet.Domain.Entities.Schools;
@@ -34,7 +35,7 @@ public class SchoolController : ControllerBase
     [HttpPost("search")]
     [ProducesResponseType(typeof(IEnumerable<School>), StatusCodes.Status200OK)]
     public async Task<IActionResult> SearchSchools(
-        [FromBody] SearchSchoolsRequest request,
+        [FromBody]SearchSchoolsRequestDto request,
         CancellationToken cancellationToken)
     {
         try
@@ -118,9 +119,3 @@ public class SchoolController : ControllerBase
 }
 
 
-public record SearchSchoolsRequest(
-    string? Municipality = null,
-    List<string>? ProgramCodes = null,
-    string? SearchText = null,
-    int? MaxResults = 100
-);

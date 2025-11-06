@@ -1,7 +1,7 @@
 using FlexNet.Application.Models;
 using FlexNet.Domain.Entities;
 
-namespace FlexNet.Application.Services.Factories;
+namespace FlexNet.Application.Services;
 
 public class ConversationContextbuilder
 {
