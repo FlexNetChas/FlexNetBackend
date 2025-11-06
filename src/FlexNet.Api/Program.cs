@@ -28,7 +28,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddRateLimitingConfiguration();
 builder.Services.AddAuthenticationConfiguration(builder.Configuration);
 builder.Services.AddCorsConfiguration();
-
+builder.Services.AddAiMockClient(builder.Configuration);
 var app = builder.Build();
 
 // All middlewares is configure in MiddlewareExtensions class
