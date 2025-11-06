@@ -1,14 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="FluentValidation" Version="12.0.0" />
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="9.0.9" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+    <PackageReference Include="BCrypt.Net-Next"  />
+    <PackageReference Include="FluentValidation"  />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions"  />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions"  />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"  />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"  />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core"  />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt"  />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,4 +30,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\FlexNet.Domain\FlexNet.Domain.csproj" />
+	</ItemGroup>
 </Project>

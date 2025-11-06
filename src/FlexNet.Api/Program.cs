@@ -6,6 +6,9 @@ using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Remove Server header. No reason to display Kestrel server info and expose to black hats
+builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
+
 // Add services to the container.
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
