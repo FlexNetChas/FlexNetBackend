@@ -20,8 +20,8 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - name: Build with dotnet
-        run: dotnet build src/FlexNet.Api/FlexNet.Api.csproj --configuration Release
+      - name: Build entire solution
+        run: dotnet build FlexNetBackend.sln --configuration Release
         
       - name: Testing
         run: dotnet test FlexNetBackend.sln --configuration Release --no-build  
