@@ -37,6 +37,7 @@
       args:
         DOTNET_VERSION: "8.0"
         BUILD_CONFIGURATION: "Release"
+        EF_CORE_VERSION: "9.0.0"
     
     env_file:
       - ../.env.backend

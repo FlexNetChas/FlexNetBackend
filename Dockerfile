@@ -4,13 +4,14 @@
 # ARG - Variable that we can pass information to the build process.
 # We choosen ARG's to make it easy to update the .NET version in one place
 ARG DOTNET_VERSION=8.0
-ARG EF_Core_Version=9.0.0
+ARG BUILD_CONFIGURATION=Release
+ARG EF_CORE_VERSION=9.0.0
 
 # Stage 1: Build
 ## Create build stage from the official .NET SDK image and give the stage a name
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 
-ARG BUILD_CONFIGURATION=Release
+ARG BUILD_CONFIGURATION
 ENV BUILD_CONFIGURATION=${BUILD_CONFIGURATION}
 
 ## Copy csproj-filer into build and restore dependencies
@@ -35,15 +36,17 @@ RUN dotnet publish "FlexNet.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish 
 # Stage 2: Migrations
 ## This stage installs EF Core tools and prepares for running migrations
 FROM build AS migrate
+ARG EF_CORE_VERSION 
+ARG BUILD_CONFIGURATION
 
 ## Install EF Core tools globally. EF Core Tools need to match EF Core packages version used in the project
-RUN dotnet tool install --global dotnet-ef --version ${EF_Core_Version}
+RUN dotnet tool install --global dotnet-ef --version ${EF_CORE_VERSION}
 
 ENV PATH="$PATH:/root/.dotnet/tools"
 WORKDIR /src/src/FlexNet.Api
 
 ## Build the project to ensure assemblies are available for migrations
-RUN dotnet build "FlexNet.Api.csproj" -c Release
+RUN dotnet build "FlexNet.Api.csproj" -c ${BUILD_CONFIGURATION}
 ENTRYPOINT ["dotnet", "ef", "database", "update"]
 
 # Stage 3: Runtime
