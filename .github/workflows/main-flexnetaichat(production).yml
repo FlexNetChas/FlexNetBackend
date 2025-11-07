@@ -24,7 +24,7 @@ jobs:
         run: dotnet build src/FlexNet.Api/FlexNet.Api.csproj --configuration Release
         
       - name: Testing
-        run: dotnet test --configuration Release --no-build  
+        run: dotnet test FlexNetBackend.sln --configuration Release --no-build  
 
       - name: dotnet publish
         run: dotnet publish src/FlexNet.Api/FlexNet.Api.csproj -c Release -o ./myapp
