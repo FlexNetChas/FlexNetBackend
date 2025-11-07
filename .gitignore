@@ -27,5 +27,7 @@ src/FlexNet.Infrastructure/Migrations/
 .env.db
 .env.backend
 .env.frontend
+
+# Ignore appsettings in specific project folders
 /src/FlexNet.Api/appsettings.json
 /src/FlexNet.Api/appsettings.Development.json
