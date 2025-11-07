@@ -1,4 +1,4 @@
-using FlexNet.Api;
+﻿using FlexNet.Api;
 using FlexNet.Api.Configuration;
 using FlexNet.Api.Exceptions;
 using FlexNet.Api.Middleware;
@@ -30,6 +30,14 @@ builder.Services.AddAuthenticationConfiguration(builder.Configuration);
 builder.Services.AddCorsConfiguration();
 builder.Services.AddAiMockClient(builder.Configuration);
 var app = builder.Build();
+
+// Simple public health check endpoint to check if the service is running
+app.MapGet("/health", () => Results.Ok(new
+{
+    status = "Healthy",
+    timestamp = DateTime.UtcNow,
+    service = "FlexNet API"
+})).AllowAnonymous();
 
 // All middlewares is configure in MiddlewareExtensions class
 app.ConfigureMiddleware();
