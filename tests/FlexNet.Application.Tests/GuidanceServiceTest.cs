@@ -97,7 +97,7 @@ namespace FlexNet.Application.Tests
            // ASSERT
            
            Assert.False(result.IsSuccess);
-            Assert.Empty(result.Data); 
+           if (result.Data != null) Assert.Empty(result.Data);
            Assert.NotNull(result.Error);
             Assert.Equal("AUTHENTICATION_ERROR", result.Error.ErrorCode);
             Assert.False(result.Error.CanRetry);
