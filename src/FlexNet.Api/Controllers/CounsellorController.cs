@@ -1,14 +1,15 @@
 ﻿using FlexNet.Application.DTOs.Counsellor.Request;
 using FlexNet.Application.UseCases;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
+
+// [Authorize] not needed on controllers — the fallback policy already requires authentication for all endpoints.
+// Only endpoints marked with [AllowAnonymous] are accessible without authentication, aka Public Routes...
 
 namespace FlexNet.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     [EnableRateLimiting("authenticated-counsellor")]
     public class CounsellorController : ControllerBase
     {
@@ -25,5 +26,6 @@ namespace FlexNet.Api.Controllers
             var response = await _sendMessage.ExecuteAsync(request);
             return Ok(response);
         }
+        
     }
 }

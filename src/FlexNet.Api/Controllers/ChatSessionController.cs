@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
+// [Authorize] not needed on controllers — the fallback policy already requires authentication for all endpoints.
+// Only endpoints marked with [AllowAnonymous] are accessible without authentication, aka Public Routes...
+
 namespace FlexNet.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     [EnableRateLimiting("global-quota")]
     public class ChatSessionController : ControllerBase
     {
@@ -50,13 +52,19 @@ namespace FlexNet.Api.Controllers
             var createdChatSession = await _chatSessionService.CreateAsync(chatSession);
             return StatusCode(201, createdChatSession);
         }
-
+        // End a Session
+        [HttpPost("{sessionId}/end")]
+        public async Task<IActionResult> EndSessionAsync(int sessionId)
+        {
+            var result = await _chatSessionService.EndSessionAsync(sessionId);
+            return Ok(result);
+        }
         // Delete a ChatSession by ID
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteChatSessionAsync(int id)
         {
             await _chatSessionService.DeleteAsync(id);
-            return NoContent();
+            return Ok();
         }
     }
 }

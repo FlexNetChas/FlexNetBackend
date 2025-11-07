@@ -6,6 +6,9 @@ using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Remove Server header. No reason to display Kestrel server info and expose to black hats
+builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
+
 // Add services to the container.
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -25,7 +28,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddRateLimitingConfiguration();
 builder.Services.AddAuthenticationConfiguration(builder.Configuration);
 builder.Services.AddCorsConfiguration();
-
+builder.Services.AddAiMockClient(builder.Configuration);
 var app = builder.Build();
 
 // All middlewares is configure in MiddlewareExtensions class

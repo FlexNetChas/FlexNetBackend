@@ -25,7 +25,7 @@ namespace FlexNet.Api.Exceptions
                 ProblemDetails = new ProblemDetails
                 {
                     Title = "Unauthorized",
-                    Detail = "You do not have permission to access this resource.",
+                    Detail = exception.Message,
                     Status = StatusCodes.Status401Unauthorized
                 }
             };

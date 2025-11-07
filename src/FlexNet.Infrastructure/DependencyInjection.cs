@@ -4,7 +4,9 @@ using FlexNet.Application.Interfaces;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Services;
+using FlexNet.Application.Services.Formatters;
 using FlexNet.Infrastructure.Data;
+using FlexNet.Infrastructure.Interfaces;
 using FlexNet.Infrastructure.Repositories;
 using FlexNet.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using FlexNet.Infrastructure.Security;
+using FlexNet.Infrastructure.Services.Gemini;
+using FlexNet.Infrastructure.Services.Skolverket;
 
 namespace FlexNet.Infrastructure;
 
@@ -29,6 +33,21 @@ public static class DependencyInjection
         services.AddScoped<IJwtGenerator, JwtGenerator>();
         services.AddScoped<IUserDescriptionRepo, UserDescriptionRepository>();
         services.AddScoped<IChatSessionRepo, ChatSessionRepo>();
+        services.AddSingleton<IEncryptionKeyProvider, KeyVaultEncryptionKeyProvider>();
+        services.AddScoped<SchoolResponseFormatter>();
+        services.AddScoped<IAiClient, GeminiApiClient>();
+        services.AddSingleton<IEncryptionService>(sp =>
+        {
+            var keyProvider = sp.GetRequiredService<IEncryptionKeyProvider>();
+            var logger = sp.GetRequiredService<ILogger<EncryptionService>>();
+    
+            // Pre-load the key 
+            var encryptionService = EncryptionService.CreateAsync(keyProvider, logger)
+                .GetAwaiter()
+                .GetResult();  
+    
+            return encryptionService;
+        });
 
         // Add User Context Service
         services.AddHttpContextAccessor();
@@ -42,21 +61,41 @@ public static class DependencyInjection
             var logger = provider.GetRequiredService<ILogger<GuidanceService>>();
             return new GuidanceService(geminiService, logger);
         });
-        // Add Key Vault + API Key Provider
-string? vaultName = configuration["KeyVault:VaultName"];
 
-if (string.IsNullOrWhiteSpace(vaultName))
-    throw new InvalidOperationException(
-        "Missing KeyVault:VaultName configuration. " +
-        "For local development: " +
-        "1) Run 'az login' to authenticate with Azure, " +
-        "2) Run 'dotnet user-secrets set \"KeyVault:VaultName\" \"your-vault-name\"' in the Api project folder.");
+        ConfigureSkolverketServices(services, configuration);
+        ConfigureKeyVault(services, configuration);
 
+        return services;
+    }
+    private static void ConfigureSkolverketServices(
+        IServiceCollection services, 
+        IConfiguration configuration)
+    {
+        services.AddHttpClient<ISkolverketApiClient, SkolverketApiClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.skolverket.se/skolenhetsregistret/");
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+    
+        services.AddSingleton<SkolverketMapper>();
+        services.AddScoped<ISchoolService, SkolverketSchoolService>();
+    
+    }
+    private static void ConfigureKeyVault(IServiceCollection services, IConfiguration configuration)
+    {
+        string? vaultName = configuration["KeyVault:VaultName"];
+        
+        if (string.IsNullOrWhiteSpace(vaultName))
+            throw new InvalidOperationException(
+                "Missing KeyVault:VaultName configuration. " +
+                "For local development: " +
+                "1) Run 'az login' to authenticate with Azure, " +
+                "2) Run 'dotnet user-secrets set \"KeyVault:VaultName\" \"your-vault-name\"' in the Api project folder.");
+        
         var vaultUri = new Uri($"https://{vaultName}.vault.azure.net");
         services.AddSingleton(new SecretClient(vaultUri, new DefaultAzureCredential()));
         services.AddMemoryCache();
         services.AddSingleton<IApiKeyProvider, KeyVaultApiKeyProvider>();
-
-        return services;
     }
 }

@@ -4,5 +4,6 @@ public record ChatMessageResponseDto(
     int? Id,
     string MessageText,
     DateTime TimeStamp,
-    DateTime? LastUpdated
+    DateTime? LastUpdated,
+    string Role
 );

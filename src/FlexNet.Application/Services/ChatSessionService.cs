@@ -34,7 +34,7 @@ namespace FlexNet.Application.Services
 
             if (entity is null)
             {
-                throw new KeyNotFoundException("Chat session coudln't be found. Please try again!");
+                throw new KeyNotFoundException("Chat session couldn't be found. Please try again!");
             }
 
             return ConvertToCompleteDto(entity);
@@ -77,7 +77,8 @@ namespace FlexNet.Application.Services
                     {
                         MessageText = m.MessageText,
                         TimeStamp = m.TimeStamp,
-                        LastUpdated = m.LastUpdated
+                        LastUpdated = m.LastUpdated,
+                        Role = m.Role
                     };
 
                     if (m.Id.HasValue)
@@ -91,7 +92,7 @@ namespace FlexNet.Application.Services
 
             if (updated is null)
             {
-                throw new KeyNotFoundException($"Chat session coudln't be found. Please try again!");
+                throw new KeyNotFoundException($"Chat session couldn't be found. Please try again!");
             }
 
             return ConvertToCompleteDto(updated);
@@ -104,10 +105,22 @@ namespace FlexNet.Application.Services
 
             if (!result)
             {
-                throw new KeyNotFoundException("Chat session is already deleted or coudln't be found");
+                throw new KeyNotFoundException("Chat session is already deleted or couldn't be found");
             }
 
             return result;
+        }
+
+        public async Task<CompleteChatSessionResponseDto?> EndSessionAsync(int sessionID)
+        {
+            var userID = _userContextService.GetCurrentUserId();
+            var session = await _chatSessionRepo.GetByIdAsync(sessionID, userID);
+            if (session == null) throw new KeyNotFoundException("Chat session couldn't be found");
+            if(session.EndedTime.HasValue) throw new InvalidOperationException("Chat session is already ended");
+            session.EndedTime = DateTime.UtcNow;
+            var updated = await _chatSessionRepo.UpdateAsync(session);
+            if(updated == null) throw new KeyNotFoundException("Chat session couldn't be updated");
+            return ConvertToCompleteDto(updated);
         }
 
         private CompleteChatSessionResponseDto ConvertToCompleteDto(ChatSession session)
@@ -119,7 +132,7 @@ namespace FlexNet.Application.Services
                 session.StartedTime,
                 session.EndedTime,
                 session.ChatMessages.Select(m => new ChatMessageResponseDto(
-                    m.Id, m.MessageText, m.TimeStamp, m.LastUpdated
+                    m.Id, m.MessageText, m.TimeStamp, m.LastUpdated, m.Role
                 )).ToList()
             );
         }

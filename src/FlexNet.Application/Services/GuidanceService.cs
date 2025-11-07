@@ -1,3 +1,4 @@
+using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
@@ -23,10 +24,10 @@ public class GuidanceService : IGuidanceService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<GuidanceResult> GetGuidanceAsync(
+    public async Task<Result<string>> GetGuidanceAsync(
         string userMessage, 
         IEnumerable<ConversationMessage> conversationHistory, 
-        StudentContext studentContext)
+        UserContextDto userContextDto)
     {
         var attempt = 0;
         
@@ -41,7 +42,7 @@ public class GuidanceService : IGuidanceService
                 var result = await _innerService.GetGuidanceAsync(
                     userMessage, 
                     conversationHistory, 
-                    studentContext);
+                    userContextDto);
                 
                 _logger.LogInformation("Request succeeded on attempt {Attempt}", attempt);
                 return result;  
@@ -83,8 +84,91 @@ public class GuidanceService : IGuidanceService
             RetryAfter: 60,
             Message: "We're experiencing difficulties. Please try again in a moment.");  
         
-        return GuidanceResult.Failure(error);
+        return Result<string>.Failure(error);
     }
+    public async Task<Result<string>> GenerateTitleAsync(
+    IEnumerable<ConversationMessage> conversationHistory,
+    UserContextDto? userContextDto = null)
+{
+    var attempt = 0;
+    
+    while (attempt < MaxRetries)
+    {
+        attempt++;
+
+        try
+        {
+            _logger.LogInformation("Generating title - Attempt {Attempt} of {MaxRetries}", 
+                attempt, MaxRetries);
+            
+            var result = await _innerService.GenerateTitleAsync(
+                conversationHistory, 
+                userContextDto);
+            
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Title generation succeeded on attempt {Attempt}", attempt);
+                return result;
+            }
+            
+            // If it failed but error says can retry
+            if (result.Error?.CanRetry == true && attempt < MaxRetries)
+            {
+                var delay = CalculateDelay(attempt, 
+                    result.Error.RetryAfter.HasValue 
+                        ? TimeSpan.FromSeconds(result.Error.RetryAfter.Value) 
+                        : null);
+                
+                _logger.LogWarning(
+                    "Title generation attempt {Attempt} failed with retryable error {ErrorCode}. Retrying after {Delay}ms",
+                    attempt, result.Error.ErrorCode, delay.TotalMilliseconds);
+                
+                await Task.Delay(delay);
+                continue;
+            }
+            
+            // Non-retryable error or last attempt - return the error
+            _logger.LogWarning(
+                "Title generation failed with error {ErrorCode}", 
+                result.Error?.ErrorCode);
+            
+            return result;
+        }
+        catch (ServiceException ex) when (ex.CanRetry && attempt < MaxRetries)
+        {
+            var delay = CalculateDelay(attempt, ex.RetryAfter);
+            
+            _logger.LogWarning(
+                ex, 
+                "Title generation attempt {Attempt} failed. Retrying after {Delay}ms",
+                attempt, delay.TotalMilliseconds);
+            
+            await Task.Delay(delay);
+        }
+        catch (ServiceException ex)
+        {
+            _logger.LogError(ex, "Title generation failed with error {ErrorCode}", ex.ErrorCode);
+            return CreateFailureResult(ex);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during title generation");
+            return Result<string>.Failure(new ErrorInfo(
+                ErrorCode: "UNEXPECTED_ERROR",
+                Message: $"Unexpected error: {ex.Message}",
+                CanRetry: false,
+                RetryAfter: null));
+        }
+    }
+
+    var error = new ErrorInfo(
+        ErrorCode: "MAX_RETRIES_EXCEEDED",
+        Message: "Failed to generate title after multiple attempts",
+        CanRetry: true,
+        RetryAfter: 60);
+    
+    return Result<string>.Failure(error);
+}
 
     private static TimeSpan CalculateDelay(int attempt, TimeSpan? retryAfter)
     {
@@ -98,7 +182,7 @@ public class GuidanceService : IGuidanceService
         return TimeSpan.FromMilliseconds(totalMs);  
     }
 
-    private static GuidanceResult CreateFailureResult(ServiceException ex)
+    private static Result <string> CreateFailureResult(ServiceException ex)
     {
         var error = new ErrorInfo(
             ErrorCode: ex.ErrorCode,
@@ -106,6 +190,6 @@ public class GuidanceService : IGuidanceService
             RetryAfter: ex.RetryAfter.HasValue ? (int)ex.RetryAfter.Value.TotalSeconds : null, 
             Message: ex.UserMessage);
         
-        return GuidanceResult.Failure(error);
+        return Result<string>.Failure(error);
     }
 }

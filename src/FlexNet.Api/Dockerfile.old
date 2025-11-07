@@ -1,0 +1,26 @@
+# Development Dockerfile med hot reload
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+WORKDIR /src
+
+# Installera EF Core tools
+RUN dotnet tool install --global dotnet-ef --version 9.0.9
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Kopiera csproj-filer och restore
+COPY ["FlexNetBackend/src/FlexNet.Api/FlexNet.Api.csproj", "FlexNet.Api/"]
+COPY ["FlexNetBackend/src/FlexNet.Application/FlexNet.Application.csproj", "FlexNet.Application/"]
+COPY ["FlexNetBackend/src/FlexNet.Domain/FlexNet.Domain.csproj", "FlexNet.Domain/"]
+COPY ["FlexNetBackend/src/FlexNet.Infrastructure/FlexNet.Infrastructure.csproj", "FlexNet.Infrastructure/"]
+
+RUN dotnet restore "FlexNet.Api/FlexNet.Api.csproj"
+
+# Kopiera all source code
+COPY FlexNetBackend/src/ ./
+
+# Exponera portar
+EXPOSE 8080
+
+# Kör med dotnet watch för hot reload
+WORKDIR /src/FlexNet.Api
+CMD ["dotnet", "watch", "run", "--urls", "http://+:8080"]

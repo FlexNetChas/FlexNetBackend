@@ -14,7 +14,8 @@ public class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMessage>
             .HasForeignKey(cm => cm.ChatSessionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Property(x => x.MessageText).IsRequired().HasMaxLength(1000);
+        builder.Property(x => x.MessageText).IsRequired().HasColumnType("nvarchar(max)");
+        builder.Property(x => x.Role).IsRequired().HasMaxLength(50);
         builder.Property(x => x.TimeStamp).HasDefaultValueSql("GETUTCDATE()");
     }
 }

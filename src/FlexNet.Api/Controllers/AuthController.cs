@@ -1,9 +1,11 @@
 ﻿using FlexNet.Application.DTOs.Auth.Request;
-using FlexNet.Application.DTOs.Auth.Response;
 using FlexNet.Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+
+// [Authorize] not needed on controllers — the fallback policy already requires authentication for all endpoints.
+// Only endpoints marked with [AllowAnonymous] are accessible without authentication, aka Public Routes...
 
 namespace FlexNet.Api.Controllers;
 
@@ -24,6 +26,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [EnableRateLimiting("public-auth")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
         var response = await _userService.LoginAsync(request);
@@ -32,6 +35,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     [EnableRateLimiting("public-auth")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         var response = await _userService.RegisterAsync(request);
@@ -47,7 +51,6 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("user/{id}")]
-    [Authorize]
     [EnableRateLimiting("global-quota")]
     public async Task<IActionResult> GetUser(int id)
     {
