@@ -9,8 +9,9 @@
                 options.AddPolicy("AllowAll", policy =>
                 {
                     policy.WithOrigins(
-                          "http://localhost:3000",           
-                          "http://host.docker.internal:3000" 
+                          "http://localhost:3000",       // Local development
+                          "http://host.docker.internal:3000",   // Docker Desktop
+                          "http://flexnet-frontend:3000"        // Docker Compose internal
                           )
                           .AllowAnyMethod()
                           .AllowAnyHeader()
