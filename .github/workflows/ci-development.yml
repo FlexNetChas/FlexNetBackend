@@ -1,0 +1,44 @@
+name: CI for Development Branch
+
+on:
+  push:
+    branches:
+      - development
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore FlexNetBackend.sln
+
+      - name: Build solution
+        run: dotnet build FlexNetBackend.sln --configuration Release --no-restore
+
+      - name: Run tests with coverage
+        run: dotnet test FlexNetBackend.sln --configuration Release --no-build --collect:"XPlat Code Coverage"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-coverage-report
+          path: '**/TestResults/**/*.xml'
