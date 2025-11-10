@@ -1,10 +1,20 @@
-﻿using FlexNet.Api;
+﻿using Azure.Identity;
+using FlexNet.Api;
 using FlexNet.Api.Configuration;
 using FlexNet.Api.Exceptions;
 using FlexNet.Api.Middleware;
 using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultName = builder.Configuration["KeyVault:VaultName"];
+if (!string.IsNullOrWhiteSpace(keyVaultName))
+{
+    var keyVaultUri = new Uri($"https://{keyVaultName}.vault.azure.net");
+    builder.Configuration.AddAzureKeyVault(
+        keyVaultUri,
+        new DefaultAzureCredential());
+}
 
 // Remove Server header. No reason to display Kestrel server info and expose to black hats
 builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
