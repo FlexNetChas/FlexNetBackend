@@ -13,9 +13,10 @@ public static class MiddlewareExtensions
          */
         if (!app.Environment.IsDevelopment())
         {
-            app.UseHsts();
             app.UseForwardedHeaders();
-            app.UseResponseCompression();
+            // TODO: Should we enable service for response compression? Gives error in buildtimes sense it service is not registered
+            //app.UseResponseCompression();
+            app.UseHsts();
         }
         if (app.Environment.IsDevelopment())
         {

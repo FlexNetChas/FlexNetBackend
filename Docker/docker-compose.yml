@@ -1,0 +1,191 @@
+﻿services:
+  # SQL Server Database
+  # TODO: In real production, deploy to Azure SQL Database for better performance, scalability, and backup
+  # This local SQL Server is mainly for development and testing purposes in a production staging environment. 
+  # Though it's possible to comment out database and migration services and connect backend and frontend directly to Azure for production
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: flexnet-database
+    restart: unless-stopped
+    
+    env_file:
+      - ../.env.db
+    
+    ports:
+      - "1433:1433"
+    
+    volumes:
+      - sqldata:/var/opt/mssql
+
+    networks:
+      - flexnet-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $${MSSQL_SA_PASSWORD} -Q 'SELECT 1' -C || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # EF Core Database Migration
+  migrate:
+    container_name: flexnet-migrate
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: migrate
+      args:
+        DOTNET_VERSION: "8.0"
+        BUILD_CONFIGURATION: "Release"
+        EF_CORE_VERSION: "9.0.0"
+    
+    env_file:
+      - ../.env.backend
+    
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - TZ=Europe/Stockholm
+    
+    depends_on:
+      database:
+        condition: service_healthy
+    
+    networks:
+      - flexnet-network
+
+  # Backend API - Builds image from Dockerfile in /FlexNetBackend
+  backend:
+    image: flexnet-backend:staging
+    container_name: flexnet-backend
+    restart: unless-stopped
+
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        DOTNET_VERSION: "8.0"
+        BUILD_CONFIGURATION: "Release"
+    
+    env_file:
+      - ../.env.backend
+    
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - TZ=Europe/Stockholm
+    
+    depends_on:
+      database:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    
+    ports:
+      - "8080:8080"
+    
+    networks:
+      - flexnet-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    security_opt:
+      - no-new-privileges:true
+
+  # Frontend Next.js - Builds image from Dockerfile.prod in /FlexNetReact
+  frontend:
+    image: flexnet-frontend:staging
+    container_name: flexnet-frontend
+    restart: unless-stopped
+    
+    build:
+      context: ../../FlexNetReact
+      dockerfile: Dockerfile.prod
+    
+    env_file:
+      - ../.env.frontend
+    
+    environment:
+      - NODE_ENV=production
+      - TZ=Europe/Stockholm
+    
+    depends_on:
+      backend:
+        condition: service_healthy
+    
+    ports:
+      - "3000:3000"
+    
+    networks:
+      - flexnet-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    security_opt:
+      - no-new-privileges:true
+
+# Networks
+networks:
+  flexnet-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  sqldata:
+    driver: local
+
+# Commands (from FlexNet\FlexNetBackend\Docker)
+#─────────────────────────────────────────────────────
+# Build and start (rebuilds images if Dockerfile changed):
+#   docker compose up -d --build
+#─────────────────────────────────────────────────────
+
+#─────────────────────────────────────────────────────
+# Start without rebuilding:
+#   docker compose up -d
+#─────────────────────────────────────────────────────
+
+#─────────────────────────────────────────────────────
+# Force rebuild:
+#   docker compose build --no-cache
+#   docker compose up -d
+#─────────────────────────────────────────────────────
+
+#─────────────────────────────────────────────────────
+# View logs (if errors):
+#   docker compose logs -f
+#   docker logs flexnet-backend -f
+#   docker logs flexnet-frontend -f
+#─────────────────────────────────────────────────────
+
+#─────────────────────────────────────────────────────
+# Stop services:
+#   docker compose down
+#─────────────────────────────────────────────────────
+
+#─────────────────────────────────────────────────────
+# Health check:
+#   docker compose ps
+#─────────────────────────────────────────────────────
+
+#─────────────────────────────────────────────────────
+# Test Backend health endpoint:
+#   curl http://localhost:8080/health
+#─────────────────────────────────────────────────────
+
+#─────────────────────────────────────────────────────
+# Test Frontend access:
+#   curl http://localhost:3000
+#─────────────────────────────────────────────────────
