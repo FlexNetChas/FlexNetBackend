@@ -47,6 +47,17 @@ public class RegularCounselingGenerator
 
 
     }
+
+    public async IAsyncEnumerable<Result<string>> GenerateStreamingAsync(string userMessage,
+        IEnumerable<ConversationMessage> conversationHistory, UserContextDto userContextDto)
+    {
+        var prompt = BuildPrompt(userMessage, conversationHistory, userContextDto);
+
+        await foreach (var chunk in _aiClient.CallStreamingAsync(prompt))
+        {
+            yield return chunk;
+        }
+    }
     private static string BuildPrompt(
         string userMessage,
         IEnumerable<ConversationMessage> conversationHistory,

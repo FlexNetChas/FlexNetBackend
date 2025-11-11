@@ -51,4 +51,62 @@ public class GeminiApiClient: IAiClient
         }
 
     }
+
+    public async IAsyncEnumerable<Result<string>> CallStreamingAsync(string prompt)
+    {
+        var apiKey = await GetApiKeyForStreamingAsync();
+        if (!apiKey.IsSuccess)
+        {
+            yield return apiKey;
+            yield break;
+        }
+        var model = new GenerativeModel(){ApiKey = apiKey.ToString()};
+        var chunkCount = 0;
+        var streamEnumerator = model.GenerateContentStream(prompt).GetAsyncEnumerator();
+
+        try
+        {
+            while (await streamEnumerator.MoveNextAsync())
+            {
+                chunkCount++;
+
+                var response = streamEnumerator.Current;
+                var chunkText = response.Text;
+
+                if (string.IsNullOrWhiteSpace(chunkText))
+                {
+                    _logger.LogDebug("Skipping empty chunk {Count}", chunkCount);
+                    continue;
+                }
+                
+                _logger.LogDebug("Streaming chunk {Count}, lenght: {Length}", chunkCount, chunkText.Length);
+                
+                yield return Result<string>.Success(chunkText);
+                _logger.LogInformation("Streaming completed, total chunks: {Count}", chunkCount);
+            }
+        }
+        finally
+        {
+            await streamEnumerator.DisposeAsync();
+            _logger.LogDebug("Stream disposed after {Count} chunks", chunkCount);
+        } 
+    }
+
+    private async Task<Result<string>> GetApiKeyForStreamingAsync()
+    {
+        try
+        {
+            var apiKey = await _apiKeyProvider.GetApiKeyAsync();
+            return Result<string>.Success(apiKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get API key for streaming");
+            return Result<string>.Failure(new ErrorInfo(
+                ErrorCode: "API_KEY_ERROR",
+                Message: $"Failed to get API key for streaming: {ex.Message}",
+                CanRetry: true,
+                RetryAfter: null));
+        }
+    }
 }

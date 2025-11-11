@@ -170,6 +170,18 @@ public class GuidanceService : IGuidanceService
     return Result<string>.Failure(error);
 }
 
+    public async IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(string userMessage, IEnumerable<ConversationMessage> conversationHistory,
+        UserContextDto userContextDto)
+    {
+        await foreach (var chunk in _innerService.GetGuidanceStreamingAsync(
+                           userMessage,
+                           conversationHistory,
+                           userContextDto))
+        {
+            yield return chunk;
+        }
+    }
+
     private static TimeSpan CalculateDelay(int attempt, TimeSpan? retryAfter)
     {
         if (retryAfter.HasValue) 
