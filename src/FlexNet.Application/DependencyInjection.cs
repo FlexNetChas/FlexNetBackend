@@ -33,7 +33,7 @@ namespace FlexNet.Application
             services.AddScoped<TitleGenerator>();
             services.AddScoped<RegularCounselingGenerator>();
             services.AddScoped<NoResultsGenerator>();
-            
+            services.AddScoped<SendCounsellingMessageStreaming>();
 
             /* Register FluentValidation validators from Application assembly.
              * AddValidatorsFromAssembly is an extension method from FluentValidation that scans 
