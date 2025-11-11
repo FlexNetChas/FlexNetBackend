@@ -17,6 +17,7 @@ public interface IUserService
     Task<string> GenerateJwtTokenAsync(User user);
     Task<LoginResponseDto> LoginAsync(LoginRequestDto request);
     Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request);
+    Task<bool> DeleteUserAccountAsync(int userId, int requestingUserId);
 
 
     // Mapping method in userservice to separate mapping logic from API layer
