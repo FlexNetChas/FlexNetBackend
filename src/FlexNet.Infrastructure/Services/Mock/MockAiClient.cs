@@ -42,6 +42,36 @@ public class MockAiClient : IAiClient
         return Result<string>.Success(response);
     }
 
+    public async IAsyncEnumerable<Result<string>> CallStreamingAsync(string prompt)
+    {
+        _logger.LogInformation("Mock streaming AI call with prompt length: {Length}", prompt.Length);
+
+        // Simulate delay before first chunk
+        await Task.Delay(_random.Next(_minDelayMs, _maxDelayMs));
+
+        // Generate mock response
+        var fullResponse = GenerateResponse(PromptType.RegularCounseling, prompt); // Use your existing method
+
+        // Split into chunks (simulate streaming)
+        var words = fullResponse.Split(' ');
+        var chunkSize = 3; // 3 words per chunk
+
+        for (int i = 0; i < words.Length; i += chunkSize)
+        {
+            var chunk = string.Join(" ", words.Skip(i).Take(chunkSize));
+        
+            if (!string.IsNullOrWhiteSpace(chunk))
+            {
+                yield return Result<string>.Success(chunk + " ");
+            
+                // Small delay between chunks to simulate real streaming
+                await Task.Delay(_random.Next(50, 150));
+            }
+        }
+
+        _logger.LogInformation("Mock streaming completed");
+    }
+
     private PromptType DetectPromptType(string prompt)
     {
         var lower = prompt.ToLowerInvariant();
