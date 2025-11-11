@@ -1,5 +1,6 @@
 ﻿using FlexNet.Application.DTOs.Auth.Request;
 using FlexNet.Application.Interfaces.IServices;
+using FlexNet.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -16,11 +17,14 @@ public class AuthController : ControllerBase
     private readonly IUserService _userService;
     private readonly ITokenService _tokenService;
     private readonly ILogger<AuthController> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public AuthController(IUserService userService, ITokenService tokenService,  ILogger<AuthController> logger)
+    public AuthController(IUserService userService, ITokenService tokenService,  ILogger<AuthController> logger, IUserContextService userContextService
+)
     {
         _userService = userService;
         _tokenService = tokenService;
+        _userContextService = userContextService;
         _logger = logger;
     }
 
@@ -58,5 +62,14 @@ public class AuthController : ControllerBase
         var userDto = _userService.MapToDto(user);
 
         return Ok(userDto);
+    }
+
+    [HttpDelete("user/{id}")]
+    [EnableRateLimiting("global-quota")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var requestingUserId = _userContextService.GetCurrentUserId();
+        await _userService.DeleteUserAccountAsync(id, requestingUserId);
+        return Ok(new { message = "Account deleted successfully" });
     }
 }
