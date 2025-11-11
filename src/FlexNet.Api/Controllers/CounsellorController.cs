@@ -1,5 +1,6 @@
 ﻿using FlexNet.Application.DTOs.Counsellor.Request;
 using FlexNet.Application.UseCases;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace FlexNet.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/message")]
     [EnableRateLimiting("authenticated-counsellor")]
     public class CounsellorController : ControllerBase
     {
@@ -22,26 +23,26 @@ namespace FlexNet.Api.Controllers
             _sendMessageStreaming = sendMessageStreaming;
         }
 
-        [HttpPost("message")]
+        [HttpPost("")]
         public async Task<IActionResult> SendMessage([FromBody] SendMessageRequestDto request)
         {
             var response = await _sendMessage.ExecuteAsync(request);
             return Ok(response);
         }
-
-        [HttpGet("message/stream")]
-        public async Task StreamMessage([FromQuery] string userMessage, [FromQuery] int? chatSessionId = null)
+        [HttpGet("stream")]
+        public async Task StreamMessage([FromQuery] string message, [FromQuery] int? chatSessionId = null)
         {
             //1. Set SSE headers
             Response.Headers.Add("Content-Type", "text/event-stream");
             Response.Headers.Add("Cache-Control", "no-cache");
             Response.Headers.Add("Connection", "keep-alive");
 
+            var request = new SendMessageRequestDto(message, chatSessionId);
+
             try
             {
                 // 2. Call your use case (need to create streaming version)
-                await foreach (var result in _sendMessageStreaming.ExecuteAsync(
-                                   new SendMessageRequestDto(userMessage, chatSessionId)))
+                await foreach (var result in _sendMessageStreaming.ExecuteAsync(request))
                 {
                     if (result.IsSuccess)
                     {
