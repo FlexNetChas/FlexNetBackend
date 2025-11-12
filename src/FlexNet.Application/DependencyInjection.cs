@@ -34,7 +34,10 @@ namespace FlexNet.Application
             services.AddScoped<RegularCounselingGenerator>();
             services.AddScoped<NoResultsGenerator>();
             services.AddScoped<SendCounsellingMessageStreaming>();
-
+            services.AddScoped<MessagePersistence>();
+            services.AddScoped<MessageContextPreparation>();
+            
+            
             /* Register FluentValidation validators from Application assembly.
              * AddValidatorsFromAssembly is an extension method from FluentValidation that scans 
              * Application assembly for all classes that inherit from AbstractValidator<DTO> */
