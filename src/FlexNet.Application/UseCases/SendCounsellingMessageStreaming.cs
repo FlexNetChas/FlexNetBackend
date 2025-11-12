@@ -83,7 +83,7 @@ public class SendCounsellingMessageStreaming
             conversationHistory,
             sanitizedMessage);
 
-        // 6. STREAM the response (no persistence yet - TODO!)
+        // 6. STREAM the response 
         await foreach (var chunk in _guidanceService.GetGuidanceStreamingAsync(
             contextMessage,
             conversationHistory,
