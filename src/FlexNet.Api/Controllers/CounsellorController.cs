@@ -33,9 +33,9 @@ namespace FlexNet.Api.Controllers
         public async Task StreamMessage([FromQuery] string message, [FromQuery] int? chatSessionId = null)
         {
             //1. Set SSE headers
-            Response.Headers.Add("Content-Type", "text/event-stream");
-            Response.Headers.Add("Cache-Control", "no-cache");
-            Response.Headers.Add("Connection", "keep-alive");
+            Response.Headers.Append("Content-Type", "text/event-stream");
+            Response.Headers.Append("Cache-Control", "no-cache");
+            Response.Headers.Append("Connection", "keep-alive");
 
             var request = new SendMessageRequestDto(message, chatSessionId);
 
