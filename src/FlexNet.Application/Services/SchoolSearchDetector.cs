@@ -44,7 +44,6 @@ public SchoolRequestInfo? DetectSchoolRequest(string message)
             // Validate: Must have at least municipality OR program
             if (request.Municipality != null ||
                 (request.ProgramCodes != null && request.ProgramCodes.Count != 0)) return request;
-            _logger.LogInformation("Query too vague - needs location OR program");
             return null;
 
         }

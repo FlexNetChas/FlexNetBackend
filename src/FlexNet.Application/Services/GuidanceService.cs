@@ -37,14 +37,12 @@ public class GuidanceService : IGuidanceService
 
             try
             {
-                _logger.LogInformation("Attempt {Attempt} of {MaxRetries}", attempt, MaxRetries);
                 
                 var result = await _innerService.GetGuidanceAsync(
                     userMessage, 
                     conversationHistory, 
                     userContextDto);
                 
-                _logger.LogInformation("Request succeeded on attempt {Attempt}", attempt);
                 return result;  
             }
             catch (ServiceException ex) when (ex.CanRetry && attempt < MaxRetries)  
@@ -98,16 +96,13 @@ public class GuidanceService : IGuidanceService
 
         try
         {
-            _logger.LogInformation("Generating title - Attempt {Attempt} of {MaxRetries}", 
-                attempt, MaxRetries);
-            
+
             var result = await _innerService.GenerateTitleAsync(
                 conversationHistory, 
                 userContextDto);
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Title generation succeeded on attempt {Attempt}", attempt);
                 return result;
             }
             
