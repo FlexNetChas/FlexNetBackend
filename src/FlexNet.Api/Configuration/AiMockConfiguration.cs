@@ -57,7 +57,7 @@ namespace FlexNet.Api.Configuration
             
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("╔══════════════════════════════════════════════════╗");
-            Console.WriteLine("║  🤖 PRODUCTION MODE: Real Gemini AI Client       ║");
+            Console.WriteLine("║  🤖 PRODUCTION MODE: Real Gemini AI Client        ║");
             Console.WriteLine("║                                                  ║");
             Console.WriteLine("║  ✓ Live API calls                                ║");
             Console.WriteLine("║  ⚠ Rate limits apply                             ║");
