@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlexNet.Infrastructure.Repositories
 {
-    class ChatSessionRepo : IChatSessionRepo
+    public class ChatSessionRepo : IChatSessionRepo
     {
         private readonly ApplicationDbContext _context;
 
