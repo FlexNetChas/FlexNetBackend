@@ -15,5 +15,9 @@ namespace FlexNet.Application.Interfaces.IServices
             UserContextDto userContextDto);
 
         Task<Result<string>> GenerateTitleAsync(IEnumerable<ConversationMessage> conversationHistory, UserContextDto? userContextDto = null);
+        IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(
+            string userMessage, 
+            IEnumerable<ConversationMessage> conversationHistory,
+            UserContextDto userContextDto);
     }
 }

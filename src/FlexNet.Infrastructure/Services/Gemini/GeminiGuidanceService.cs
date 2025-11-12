@@ -104,6 +104,30 @@ public class GeminiGuidanceService : IGuidanceService
         return await _titleGenerator.GenerateAsync(conversationHistory, userContextDto);
     }
 
+    public async IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(string userMessage, IEnumerable<ConversationMessage> conversationHistory,
+        UserContextDto userContextDto)
+    {
+        var rawMessage = ExtractRawMessage(userMessage);
+
+        var schoolRequest = _detector.DetectSchoolRequest(rawMessage);
+
+        if (schoolRequest != null)
+        {
+            _logger.LogInformation("School search detected - using non-streaming fallback");
+            var result = await GetGuidanceAsync(userMessage, conversationHistory, userContextDto);
+            yield return result;
+            yield break;
+        }
+
+        await foreach (var chunk in _regularGenerator.GenerateStreamingAsync(
+                           userMessage,
+                           conversationHistory,
+                           userContextDto))
+        {
+            yield return chunk;
+        }
+    }
+
     private async Task<List<School>> SearchSchools(SchoolRequestInfo request)
     {
         var criteria = new SchoolSearchCriteria(

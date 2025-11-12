@@ -37,14 +37,12 @@ public class GuidanceService : IGuidanceService
 
             try
             {
-                _logger.LogInformation("Attempt {Attempt} of {MaxRetries}", attempt, MaxRetries);
                 
                 var result = await _innerService.GetGuidanceAsync(
                     userMessage, 
                     conversationHistory, 
                     userContextDto);
                 
-                _logger.LogInformation("Request succeeded on attempt {Attempt}", attempt);
                 return result;  
             }
             catch (ServiceException ex) when (ex.CanRetry && attempt < MaxRetries)  
@@ -98,16 +96,13 @@ public class GuidanceService : IGuidanceService
 
         try
         {
-            _logger.LogInformation("Generating title - Attempt {Attempt} of {MaxRetries}", 
-                attempt, MaxRetries);
-            
+
             var result = await _innerService.GenerateTitleAsync(
                 conversationHistory, 
                 userContextDto);
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Title generation succeeded on attempt {Attempt}", attempt);
                 return result;
             }
             
@@ -169,6 +164,18 @@ public class GuidanceService : IGuidanceService
     
     return Result<string>.Failure(error);
 }
+
+    public async IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(string userMessage, IEnumerable<ConversationMessage> conversationHistory,
+        UserContextDto userContextDto)
+    {
+        await foreach (var chunk in _innerService.GetGuidanceStreamingAsync(
+                           userMessage,
+                           conversationHistory,
+                           userContextDto))
+        {
+            yield return chunk;
+        }
+    }
 
     private static TimeSpan CalculateDelay(int attempt, TimeSpan? retryAfter)
     {
