@@ -1,97 +1,67 @@
+using System.Text;
 using FlexNet.Application.DTOs.Counsellor.Request;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
 using FlexNet.Application.Services;
+using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.UseCases;
 
 public class SendCounsellingMessageStreaming
 {
     private readonly IGuidanceService _guidanceService;
-    private readonly AiContextBuilder _aiContextBuilder;
-    private readonly IUserDescriptionRepo _userDescriptionRepo;
-    private readonly IUserContextService _userContextService;
-    private readonly IInputSanitizer _inputSanitizer;
-    private readonly ConversationContextbuilder _contextBuilder;
-    private readonly IChatSessionRepo _chatSessionRepo;
+    private readonly MessageContextPreparation _contextPreparation;
+    private readonly MessagePersistence _messagePersistence;
+    private readonly ILogger<SendCounsellingMessageStreaming> _logger;
 
     public SendCounsellingMessageStreaming(
         IGuidanceService guidanceService,
-        AiContextBuilder aiContextBuilder,
-        IUserDescriptionRepo userDescriptionRepo,
-        IUserContextService userContextService,
-        IInputSanitizer inputSanitizer,
-        ConversationContextbuilder contextBuilder,
-        IChatSessionRepo chatSessionRepo)
+        ConversationContextbuilder contextBuilder, MessageContextPreparation contextPreparation, MessagePersistence messagePersistence, ILogger<SendCounsellingMessageStreaming> logger)
     {
         _guidanceService = guidanceService;
-        _aiContextBuilder = aiContextBuilder;
-        _userDescriptionRepo = userDescriptionRepo;
-        _userContextService = userContextService;
-        _inputSanitizer = inputSanitizer;
-        _contextBuilder = contextBuilder;
-        _chatSessionRepo = chatSessionRepo;
+        _contextPreparation = contextPreparation;
+        _messagePersistence = messagePersistence;
+        _logger = logger;
     }
 
     public async IAsyncEnumerable<Result<string>> ExecuteAsync(SendMessageRequestDto request)
     {
-        // 1. Validate
-        if (string.IsNullOrWhiteSpace(request.Message))
-        {
-            yield return Result<string>.Failure(new ErrorInfo(
-                ErrorCode: "INVALID_MESSAGE",
-                Message: "Message cannot be empty",
-                CanRetry: false,
-                RetryAfter: null));
-            yield break;
-        }
+        // 1. SETUP
 
-        // 2. Sanitize
-        var sanitizedMessage = _inputSanitizer.SanitizeUserInput(request.Message);
-        var userId = _userContextService.GetCurrentUserId();
+        var context = await _contextPreparation.PrepareAsync(request);
+        
+        // 2. BUILD RESPONSE
+        var fullResponse = new StringBuilder();
 
-        // 3. Get user context
-        var userDescription = await _userDescriptionRepo.GetUserDescriptionByUserIdAsync(userId);
-        if (userDescription == null)
-        {
-            yield return Result<string>.Failure(new ErrorInfo(
-                ErrorCode: "USER_NOT_FOUND",
-                Message: "User not found",
-                CanRetry: false,
-                RetryAfter: null));
-            yield break;
-        }
-
-        var userContext = userDescription.ToUserContextDto();
-
-        // 4. Get conversation history (if session exists)
-        var conversationHistory = new List<ConversationMessage>();
-        if (request.ChatSessionId.HasValue)
-        {
-            var session = await _chatSessionRepo.GetByIdAsync(request.ChatSessionId.Value, userId);
-            if (session != null)
-            {
-                conversationHistory = _contextBuilder.BuildHistory(session.ChatMessages);
-            }
-        }
-
-        // 5. Build AI context
-        var contextMessage = _aiContextBuilder.BuildContext(
-            userContext,
-            conversationHistory,
-            sanitizedMessage);
-
-        // 6. STREAM the response 
+        // 3. AI CALL
         await foreach (var chunk in _guidanceService.GetGuidanceStreamingAsync(
-            contextMessage,
-            conversationHistory,
-            userContext))
+                           context.ContextMessage,
+                           context.ConversationHistory,
+                           context.UserContext))
         {
+            if (!chunk.IsSuccess)
+            {
+                _logger.LogError(
+                    "Streaming failed for session {SessionId}: {ErrorCode} - {ErrorMessage}", 
+                    context.Session.Id, 
+                    chunk.Error?.ErrorCode, 
+                    chunk.Error?.Message);
+                yield return chunk;
+                yield break;
+            }
+            // 4. RESPONSE
+            fullResponse.Append(chunk.Data);
             yield return chunk;
         }
-
-        // TODO: Add message persistence, session creation, title generation
+        // 5. PERSISTENCE
+        await _messagePersistence.SaveMessagesAndGenerateTitleAsync(
+            context.Session,
+            context.SanitizedMessage,
+            fullResponse.ToString(),
+            context.UserContext,
+            context.UserId);
     }
+    
 }
