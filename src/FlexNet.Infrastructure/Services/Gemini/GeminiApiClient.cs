@@ -60,7 +60,7 @@ public class GeminiApiClient: IAiClient
             yield return apiKey;
             yield break;
         }
-        var model = new GenerativeModel(){ApiKey = apiKey.ToString()};
+        var model = new GenerativeModel(){ApiKey = apiKey.Data};
         var chunkCount = 0;
         var streamEnumerator = model.GenerateContentStream(prompt).GetAsyncEnumerator();
 

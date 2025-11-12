@@ -7,7 +7,7 @@ using FlexNet.Domain.Entities;
 
 namespace FlexNet.Application.Services
 {
-    class ChatSessionService : IChatSessionService
+    public class ChatSessionService : IChatSessionService
     {
         private readonly IChatSessionRepo _chatSessionRepo;
         private readonly IUserContextService _userContextService;
