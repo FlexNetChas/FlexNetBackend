@@ -46,7 +46,6 @@ internal sealed class KeyVaultEncryptionKeyProvider : IEncryptionKeyProvider
         
         try
         {
-            _logger.LogInformation("Loading encryption key from Key Vault: {SecretName}", _secretName);
             
             Response<KeyVaultSecret> response = await _secretClient.GetSecretAsync(
                 _secretName, 
@@ -69,7 +68,6 @@ internal sealed class KeyVaultEncryptionKeyProvider : IEncryptionKeyProvider
             // Cache for a long time (encryption key rarely changes)
             _cache.Set(CacheKey, keyBytes, _cacheTtl);
             
-            _logger.LogInformation("✅ Encryption key loaded: 256-bit key cached");
             
             return keyBytes;
         }
