@@ -25,7 +25,6 @@ public class EncryptionService : IEncryptionService
         ILogger<EncryptionService> logger)
     {
         var key = await keyProvider.GetEncryptionKeyAsync();
-        logger.LogInformation("✅ EncryptionService initialized with pre-loaded key");
         return new EncryptionService(key, logger);
     }
     
