@@ -59,20 +59,38 @@ public class SchoolAdviceGenerator : ISchoolAdviceGenerator
       prompt.AppendLine($"Jag har visat dem {schools.Count} gymnasieskolor från Skolverkets officiella register:");
         
       // Give AI contextDto about which schools
-      foreach (var school in schools.Take(3))
+      foreach (var school in schools.Take(5))
       {
-         prompt.AppendLine($"- {school.Name} i {school.Municipality}");
+         prompt.AppendLine($"**{school.Name}** ({school.Municipality})");
+        
+         // Programs offered
+         if (school.Programs.Any())
+         {
+            var programs = string.Join(", ", school.Programs.Take(3).Select(p => p.Name));
+            prompt.AppendLine($"  Program: {programs}");
+         }
+        
+         // Contact details
+         if (!string.IsNullOrEmpty(school.WebsiteUrl))
+            prompt.AppendLine($"  Webbsida: {school.WebsiteUrl}");
+            
+         if (!string.IsNullOrEmpty(school.Phone))
+            prompt.AppendLine($"  Telefon: {school.Phone}");
+            
+         if (!string.IsNullOrEmpty(school.Email))
+            prompt.AppendLine($"  E-post: {school.Email}");
       }
         
       prompt.AppendLine();
-      prompt.AppendLine("Skriv 3-4 meningar på svenska som:");
+      prompt.AppendLine("Skriv 3-5 meningar på svenska som:");
       prompt.AppendLine("1. Bekräftar deras intresse för teknik/utbildning");
-      prompt.AppendLine("2. Uppmuntrar dem att besöka skolornas webbsidor");
-      prompt.AppendLine("3. Föreslår att gå på öppet hus-dagar");
-      prompt.AppendLine("4. Erbjuder hjälp med fler frågor");
+      prompt.AppendLine("2. Refererar till SPECIFIKA skolor och deras program");
+      prompt.AppendLine("3. Uppmuntrar att besöka webbsidor (nämn specifika URL:er)");
+      prompt.AppendLine("4. Föreslår att kontakta skolor direkt (nämn telefonnummer eller e-post)");
+      prompt.AppendLine("5. Erbjuder hjälp med fler frågor");
       prompt.AppendLine();
-      prompt.AppendLine("Var varm, stödjande och uppmuntrande.");
-      prompt.AppendLine("Skriv ENDAST uppmuntran-texten (inga listor, inga skolnamn).");
+      prompt.AppendLine("Var varm, personlig och specifik. Använd den information jag gav dig om skolorna.");
+      prompt.AppendLine("Skriv ENDAST rådgivningstexten (inga listor med skolor - jag visar dem separat).");
         
       return prompt.ToString();
   
