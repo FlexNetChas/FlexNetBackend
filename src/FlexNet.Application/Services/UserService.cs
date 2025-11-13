@@ -13,6 +13,8 @@ public class UserService : IUserService
     private readonly IJwtGenerator _jwtGenerator;
     private readonly IUserDescriptionRepo _userDescriptionRepo;
     private readonly ITokenService _tokenService;
+    private static readonly string DummyHash =
+        "$2a$11$dummyhashtopreventtimingattack1234567890123456789012";
 
     public UserService(IUserRepo userRepository,  IJwtGenerator jwtGenerator,
     IUserDescriptionRepo userDescriptionRepo, ITokenService tokenService)
@@ -33,18 +35,21 @@ public class UserService : IUserService
         return await _userRepository.GetByEmailAsync(email);
     }
 
+    /* We use Task.Run to offload CPU-intensive hashing to a background thread
+     * This helps keep the main thread responsive, especially under load.
+     * 
+     * https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.run
+     */
     public async Task<User> CreateAsync(User user)
     {
-        // Hash password before saving
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+        user.PasswordHash = await Task.Run(() =>
+            BCrypt.Net.BCrypt.HashPassword(user.PasswordHash));
+
         user.CreatedAt = DateTime.UtcNow;
         user.IsActive = true;
 
-        // Create user
         var createdUser = await _userRepository.AddAsync(user);
 
-        // Create default user description to to improve performance and less API requests
-        // A user will only be able to update (initial login) or patch descriptions later
         var userDescription = new UserDescription
         {
             UserId = createdUser.Id,
@@ -54,7 +59,6 @@ public class UserService : IUserService
             Purpose = string.Empty
         };
 
-        // Save UserDescription
         await _userDescriptionRepo.AddUserDescriptionAsync(userDescription);
         return createdUser;
     }
@@ -64,14 +68,6 @@ public class UserService : IUserService
         return await _userRepository.DeleteAsync(id);
     }
 
-    public async Task<bool> ValidatePasswordAsync(string email, string password)
-    {
-        var user = await _userRepository.GetByEmailAsync(email);
-        if (user is null) return false;
-
-        return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-    }
-
     public Task<string> GenerateJwtTokenAsync(User user)
     {
 
@@ -79,19 +75,20 @@ public class UserService : IUserService
         return Task.FromResult(token);
     }
 
-    /* Return invalid credentials exception and don't specify if email or password is wrong 
-     * to avoid giving hints to potential bruteforce attacks. 
+    /* To avoid timing attacks and hints. We always perform password hash verification, even if user is not found.
+     * 
+     * Referens:
+     * https://dev.to/propelauth/understanding-timing-attacks-with-code-examples-32e6
      */
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
     {
-        var isValid = await ValidatePasswordAsync(request.Email, request.Password);
-        if (!isValid)
-        {
-            throw new UnauthorizedAccessException("Invalid email or password");
-        }
-
         var user = await _userRepository.GetByEmailAsync(request.Email);
-        if (user == null)
+
+        // Always verify password to avoid timing attacks 
+        var passwordHash = user?.PasswordHash ?? DummyHash;
+        var isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, passwordHash);
+
+        if (user is null || !isValidPassword)
         {
             throw new UnauthorizedAccessException("Invalid email or password");
         }
@@ -99,11 +96,7 @@ public class UserService : IUserService
         var tokens = await _tokenService.GenerateTokensAsync(user);
         var userDto = MapToDto(user);
 
-        return new LoginResponseDto(
-            tokens.AccessToken,
-            tokens.RefreshToken,
-            userDto
-        );
+        return new LoginResponseDto(tokens.AccessToken, tokens.RefreshToken, userDto);
     }
 
     /* Todo: We may need to swap precheck logic with DB unique constraint to avoid 
@@ -140,31 +133,20 @@ public class UserService : IUserService
 
     public async Task<bool> DeleteUserAccountAsync(int userId, int requestingUserId)
     {
-        // Ensure that a user can only delete their own account. requestingUserId is user id provided from the JWT token claims
+        // Ensure user can only delete their own account
         if (userId != requestingUserId)
         {
             throw new UnauthorizedAccessException("You can only delete your own account");
         }
 
-        // Check if user exists
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user is null)
+        var deleted = await _userRepository.DeleteAsync(userId);
+
+        if (!deleted)
         {
-            throw new KeyNotFoundException($"User not found");
+            throw new KeyNotFoundException("User not found");
         }
 
-        try
-        {
-            // Let EF handle the cascade delete
-            var deleted = await _userRepository.DeleteAsync(userId);
-
-            return deleted;
-        }
-        catch (Exception ex)
-        {
- 
-            throw new Exception("An error occurred while deleting the user account", ex);
-        }
+        return deleted;
     }
 
 
@@ -192,5 +174,7 @@ public class UserService : IUserService
     {
         return await _userRepository.GetAllAsync();
     }
+
+
 
  */
