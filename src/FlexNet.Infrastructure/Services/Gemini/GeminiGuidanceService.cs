@@ -15,8 +15,7 @@ public class GeminiGuidanceService : IGuidanceService
 
     public GeminiGuidanceService(
         IGuidanceRouter router,
-        TitleGenerator titleGenerator,
-        ILogger<GeminiGuidanceService> logger
+        TitleGenerator titleGenerator
     )
     {
         _router = router ?? throw new ArgumentNullException(nameof(router));
@@ -24,11 +23,11 @@ public class GeminiGuidanceService : IGuidanceService
     }
 
     public async Task<Result<string>> GetGuidanceAsync(
-        string userMessage,
+        string userMsg,
         IEnumerable<ConversationMessage> conversationHistory,
         UserContextDto userContextDto)
     {
-        return await _router.RouteAndExecuteAsync(userMessage, conversationHistory, userContextDto);
+        return await _router.RouteAndExecuteAsync(userMsg, conversationHistory, userContextDto);
     }
 
     public async Task<Result<string>> GenerateTitleAsync(
@@ -39,10 +38,10 @@ public class GeminiGuidanceService : IGuidanceService
         return await _titleGenerator.GenerateAsync(conversationHistory, userContextDto);
     }
 
-    public IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(string userMessage,
+    public IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(string userMsg,
         IEnumerable<ConversationMessage> conversationHistory,
         UserContextDto userContextDto)
     {
-        return _router.RouteAndExecuteStreamingAsync(userMessage, conversationHistory, userContextDto);
+        return _router.RouteAndExecuteStreamingAsync(userMsg, conversationHistory, userContextDto);
     }
 }

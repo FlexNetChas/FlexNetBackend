@@ -30,8 +30,7 @@ public class GeminiGuidanceServiceTest
     
         _service = new GeminiGuidanceService(
             _routerMock.Object,
-            titleGenerator,  // ← Real instance, not mock
-            _loggerMock.Object
+            titleGenerator
         );
     
         _output = output;
@@ -44,14 +43,14 @@ public class GeminiGuidanceServiceTest
 
         var userMsg = "Hello, I want to study to becoma a doctor. What kind of programs should I study?";
         var conversationHistory = Enumerable.Empty<ConversationMessage>();
-        var userContext = new UserContextDto(26, null, "Högstadiet", "Become a doctor");
+        var context = new UserContextDto(26, null, "Högstadiet", "Become a doctor");
         var expectedOutput = "That's a good plan, for becoming a doctor you should focus on natural science";
         
-        _routerMock.Setup(r => r.RouteAndExecuteAsync(userMsg, conversationHistory, userContext)).ReturnsAsync(Result<string>.Success(expectedOutput));
+        _routerMock.Setup(r => r.RouteAndExecuteAsync(userMsg, conversationHistory, context)).ReturnsAsync(Result<string>.Success(expectedOutput));
 
         // Act
         
-        var result = await _service.GetGuidanceAsync(userMsg, conversationHistory, userContext);
+        var result = await _service.GetGuidanceAsync(userMsg, conversationHistory, context);
 
         // Assert
 
@@ -59,6 +58,6 @@ public class GeminiGuidanceServiceTest
         Assert.True(result.IsSuccess);
         Assert.Equal(expectedOutput, result.Data);
         Assert.Null(result.Error);
-        _routerMock.Verify(r => r.RouteAndExecuteAsync(userMsg, conversationHistory, userContext), Times.Once);
+        _routerMock.Verify(r => r.RouteAndExecuteAsync(userMsg, conversationHistory, context), Times.Once);
     }
 }

@@ -33,7 +33,7 @@ public class MessagePersistence
 
     public async Task<string> SaveMessagesAndGenerateTitleAsync(
         ChatSession session,
-        string userMessageText,
+        string userMsgText,
         string aiResponseText,
         UserContextDto userContext,
         int userId)
@@ -50,9 +50,9 @@ public class MessagePersistence
         }
 
         // 2. Create and save both messages
-        var userMessage = _chatMessageCreator.Create(
+        var userMsg = _chatMessageCreator.Create(
             session.Id!.Value,
-            userMessageText,
+            userMsgText,
             MessageRoles.User);
 
         var aiMessage = _chatMessageCreator.Create(
@@ -60,7 +60,7 @@ public class MessagePersistence
             safeResponse,
             MessageRoles.Assistant);
         
-        session.ChatMessages.Add(userMessage);
+        session.ChatMessages.Add(userMsg);
         session.ChatMessages.Add(aiMessage);
 
         var isFirstExchange = session.ChatMessages.Count == 2;
@@ -72,7 +72,7 @@ public class MessagePersistence
         if (!isFirstExchange) return safeResponse;
         var historyForTitle = new List<ConversationMessage>
         {
-            new(userMessage.Role, userMessage.MessageText),
+            new(userMsg.Role, userMsg.MessageText),
             new(aiMessage.Role, aiMessage.MessageText)
         };
         var titleResult = await _guidanceService.GenerateTitleAsync(historyForTitle, userContext);

@@ -50,21 +50,21 @@ public class GuidanceRouterTest
     {
         // Arrange
 
-        var userMessage = "Hello, I don't know what to study.";
+        var userMsg = "Hello, I don't know what to study.";
         var conversationHistory = Enumerable.Empty<ConversationMessage>();
         var context = new UserContextDto(26, null, "Högstadiet", "Become a doctor");
         var expectedResponse = "Let me help ypu explore your options...";
 
-        _regularGeneratorMock.Setup(g => g.GenerateAsync(userMessage, conversationHistory, context))
+        _regularGeneratorMock.Setup(g => g.GenerateAsync(userMsg, conversationHistory, context))
             .ReturnsAsync(Result<string>.Success(expectedResponse));
         // Act
         
-        var result = await _router.RouteAndExecuteAsync(userMessage, conversationHistory, context);
+        var result = await _router.RouteAndExecuteAsync(userMsg, conversationHistory, context);
 
         // Assert
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
-        _regularGeneratorMock.Verify(g => g.GenerateAsync(userMessage, conversationHistory, context), Times.Once);
+        _regularGeneratorMock.Verify(g => g.GenerateAsync(userMsg, conversationHistory, context), Times.Once);
         _adviceGeneratorMock.Verify(g => g.GenerateAdviceAsync(It.IsAny<string>(), It.IsAny<List<School>>(), It.IsAny<UserContextDto>()), Times.Never); 
         _noResultsGeneratorMock.Verify(g => g.GenerateAsync(It.IsAny<string>(), It.IsAny<SchoolRequestInfo>(),It.IsAny<UserContextDto>()), Times.Never);
     }

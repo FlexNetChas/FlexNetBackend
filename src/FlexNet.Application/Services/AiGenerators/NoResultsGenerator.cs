@@ -17,11 +17,11 @@ public class NoResultsGenerator : INoResultsGenerator
       _logger = logger ??  throw new ArgumentNullException(nameof(logger));
    }
 
-   public async Task<Result<string>> GenerateAsync(string userMessage, SchoolRequestInfo searchCriteria,
+   public async Task<Result<string>> GenerateAsync(string userMsg, SchoolRequestInfo searchCriteria,
       UserContextDto userContextDto)
    {
       // 1. Build prompt
-      var prompt = BuildPrompt(userMessage, searchCriteria, userContextDto);
+      var prompt = BuildPrompt(userMsg, searchCriteria, userContextDto);
       
       // 2. Call API
       var result =  await _aiClient.CallAsync(prompt);
@@ -34,12 +34,12 @@ public class NoResultsGenerator : INoResultsGenerator
       return GetFallbackMessage();
    }
 
-   private static string BuildPrompt(string userMessage, SchoolRequestInfo request,
+   private static string BuildPrompt(string userMsg, SchoolRequestInfo request,
       UserContextDto userContextDto)
    {
               var prompt = new StringBuilder();
               
-              prompt.AppendLine($"En {userContextDto.Age}-årig elev frågade: '{userMessage}'");
+              prompt.AppendLine($"En {userContextDto.Age}-årig elev frågade: '{userMsg}'");
               prompt.AppendLine();
               prompt.AppendLine("Jag sökte i Skolverkets databas men hittade inga skolor som matchar:");
               
