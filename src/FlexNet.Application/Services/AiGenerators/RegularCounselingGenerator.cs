@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services.AiGenerators;
 
-public class RegularCounselingGenerator
+public class RegularCounselingGenerator : IRegularCounselingGenerator
 {
     private readonly ILogger<RegularCounselingGenerator> _logger;
     private readonly IAiClient  _aiClient;
@@ -19,14 +19,14 @@ public class RegularCounselingGenerator
     }
 
     public async Task<Result<string>> GenerateAsync(
-        string userMessage,
+        string userMsg,
         IEnumerable<ConversationMessage> conversationHistory,
         UserContextDto userContextDto)
     {
         try
         {
             // 1. Build prompt
-            var prompt = BuildPrompt(userMessage, conversationHistory, userContextDto);
+            var prompt = BuildPrompt(userMsg, conversationHistory, userContextDto);
             
             // 2. Call API
             var result = await _aiClient.CallAsync(prompt);
@@ -48,10 +48,11 @@ public class RegularCounselingGenerator
 
     }
 
-    public async IAsyncEnumerable<Result<string>> GenerateStreamingAsync(string userMessage,
+
+    public async IAsyncEnumerable<Result<string>> GenerateStreamingAsync(string userMsg,
         IEnumerable<ConversationMessage> conversationHistory, UserContextDto userContextDto)
     {
-        var prompt = BuildPrompt(userMessage, conversationHistory, userContextDto);
+        var prompt = BuildPrompt(userMsg, conversationHistory, userContextDto);
 
         await foreach (var chunk in _aiClient.CallStreamingAsync(prompt))
         {
@@ -59,7 +60,7 @@ public class RegularCounselingGenerator
         }
     }
     private static string BuildPrompt(
-        string userMessage,
+        string userMsg,
         IEnumerable<ConversationMessage> conversationHistory,
         UserContextDto userContextDto)
     {
@@ -81,7 +82,7 @@ public class RegularCounselingGenerator
         }
         
         // Add current message
-        prompt.AppendLine($"Elev: {userMessage}");
+        prompt.AppendLine($"Elev: {userMsg}");
         prompt.AppendLine();
         
         // Instructions for AI

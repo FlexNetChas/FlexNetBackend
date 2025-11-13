@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services.AiGenerators;
 
-public class SchoolAdviceGenerator
+public class SchoolAdviceGenerator : ISchoolAdviceGenerator
 {
    private readonly ILogger<SchoolAdviceGenerator> _logger;
    private readonly SchoolResponseFormatter _formatter;
@@ -22,13 +22,13 @@ public class SchoolAdviceGenerator
       _aiClient = apiClient ??  throw new ArgumentNullException(nameof(apiClient));
    }
 
-   public async Task<Result<string>> GenerateAdviceAsync(string userMessage, List<School> schools,
+   public async Task<Result<string>> GenerateAdviceAsync(string userMsg, List<School> schools,
       UserContextDto userContext)
    {
       try
       {
          // 1. Build prompt
-         var prompt = BuildPrompt(userMessage, schools, userContext);
+         var prompt = BuildPrompt(userMsg, schools, userContext);
             
          // 2. Call API
          var result = await _aiClient.CallAsync(prompt);
@@ -37,7 +37,7 @@ public class SchoolAdviceGenerator
          if (!result.IsSuccess)  
          {
             _logger.LogWarning("Failed to generate school advice: {Error}", result.Error?.Message);
-            return await GetFallbackAdvice(userMessage, userContext);  
+            return await GetFallbackAdvice(userMsg, userContext);  
          }
             
          // 4. Format with schools (on SUCCESS)
@@ -47,14 +47,14 @@ public class SchoolAdviceGenerator
       catch (Exception ex)
       {
          _logger.LogError(ex, "Error generating school advice");
-         return await GetFallbackAdvice(userMessage, userContext);
+         return await GetFallbackAdvice(userMsg, userContext);
       }
    }
 
-   private static string BuildPrompt(string userMessage, List<School> schools, UserContextDto userContext)
+   private static string BuildPrompt(string userMsg, List<School> schools, UserContextDto userContext)
    {
       var prompt = new StringBuilder();
-      prompt.AppendLine($"En {userContext.Age}-årig elev frågade: '{userMessage}'");
+      prompt.AppendLine($"En {userContext.Age}-årig elev frågade: '{userMsg}'");
       prompt.AppendLine();
       prompt.AppendLine($"Jag har visat dem {schools.Count} gymnasieskolor från Skolverkets officiella register:");
         
@@ -78,18 +78,18 @@ public class SchoolAdviceGenerator
   
    }
 
-   private async Task<Result<string>> GetFallbackAdvice(string userMessage, UserContextDto userContextDto)
+   private async Task<Result<string>> GetFallbackAdvice(string userMsg, UserContextDto userContextDto)
    {
-      var rawMessage = ExtractRawMessage(userMessage);
+      var rawMsg = ExtractRawMessage(userMsg);
     
       // Check if asking about schools but vague
-      var isSchoolQuery = SourceArray.Any(k => rawMessage.Contains(k, StringComparison.InvariantCultureIgnoreCase));
+      var isSchoolQuery = SourceArray.Any(k => rawMsg.Contains(k, StringComparison.InvariantCultureIgnoreCase));
 
       var prompt =
          // Regular counseling
          // Give AI contextDto to ask the right questions
          isSchoolQuery ? $"""
-                          En {userContextDto.Age}-årig elev frågade: '{rawMessage}'
+                          En {userContextDto.Age}-årig elev frågade: '{rawMsg}'
 
                           Eleven är intresserad av gymnasieutbildning men har inte varit specifik ännu.
 
@@ -99,7 +99,7 @@ public class SchoolAdviceGenerator
 
                           Ställ EN vänlig fråga på svenska för att förstå deras intressen bättre.
                           Var varm och uppmuntrande.
-                          """ : userMessage;
+                          """ : userMsg;
     
       var result = await _aiClient.CallAsync(prompt);
       return result;

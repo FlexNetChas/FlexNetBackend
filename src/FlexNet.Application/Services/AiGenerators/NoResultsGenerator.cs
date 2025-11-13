@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services.AiGenerators;
 
-public class NoResultsGenerator
+public class NoResultsGenerator : INoResultsGenerator
 {
    private readonly IAiClient  _aiClient;
    private readonly ILogger<NoResultsGenerator> _logger;

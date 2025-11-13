@@ -1,13 +1,13 @@
 using FlexNet.Application.Configuration;
+using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services;
 
-public class SchoolSearchDetector
+public class SchoolSearchDetector : ISchoolSearchDetector
 {
    private readonly SchoolSearchConfiguration _config;
-   private readonly ILogger<SchoolSearchDetector> _logger;
 
    // This might need configuration, if no words matchen in the message then it will not search for any kind of education
    private static readonly string[] SchoolKeywords = new[]
@@ -18,7 +18,6 @@ public class SchoolSearchDetector
    public SchoolSearchDetector(SchoolSearchConfiguration config, ILogger<SchoolSearchDetector> logger)
    {
       _config = config ??  throw new ArgumentNullException(nameof(config));
-      _logger = logger ??  throw new ArgumentNullException(nameof(logger));
    }
 
 public SchoolRequestInfo? DetectSchoolRequest(string message)
