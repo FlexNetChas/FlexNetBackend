@@ -33,11 +33,6 @@ public class UserService : IUserService
         return await _userRepository.GetByEmailAsync(email);
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
-    {
-        return await _userRepository.GetAllAsync();
-    }
-
     public async Task<User> CreateAsync(User user)
     {
         // Hash password before saving
@@ -62,11 +57,6 @@ public class UserService : IUserService
         // Save UserDescription
         await _userDescriptionRepo.AddUserDescriptionAsync(userDescription);
         return createdUser;
-    }
-
-    public async Task<User> UpdateAsync(User user)
-    {
-        return await _userRepository.UpdateAsync(user);
     }
 
     public async Task<bool> DeleteAsync(int id)
@@ -116,10 +106,12 @@ public class UserService : IUserService
         );
     }
 
+    /* Todo: We may need to swap precheck logic with DB unique constraint to avoid 
+     * race conditions. Thought is unlikely in our current scale  */
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
     {
         var existingUser = await _userRepository.GetByEmailAsync(request.Email);
-        if (existingUser != null)
+        if (existingUser is not null)
         {
             throw new InvalidOperationException("User with this email already exists");
         }
@@ -187,3 +179,18 @@ public class UserService : IUserService
         );
     }
 }
+
+
+/* Removed Service - Not in used
+ 
+    public async Task<User> UpdateAsync(User user)
+    {
+        return await _userRepository.UpdateAsync(user);
+    }
+
+    public async Task<IEnumerable<User>> GetAllAsync()
+    {
+        return await _userRepository.GetAllAsync();
+    }
+
+ */
