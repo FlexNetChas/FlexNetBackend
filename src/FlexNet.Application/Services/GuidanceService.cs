@@ -25,7 +25,7 @@ public class GuidanceService : IGuidanceService
     }
 
     public async Task<Result<string>> GetGuidanceAsync(
-        string userMessage, 
+        string userMsg, 
         IEnumerable<ConversationMessage> conversationHistory, 
         UserContextDto userContextDto)
     {
@@ -39,7 +39,7 @@ public class GuidanceService : IGuidanceService
             {
                 
                 var result = await _innerService.GetGuidanceAsync(
-                    userMessage, 
+                    userMsg, 
                     conversationHistory, 
                     userContextDto);
                 
@@ -165,11 +165,11 @@ public class GuidanceService : IGuidanceService
     return Result<string>.Failure(error);
 }
 
-    public async IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(string userMessage, IEnumerable<ConversationMessage> conversationHistory,
+    public async IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(string userMsg, IEnumerable<ConversationMessage> conversationHistory,
         UserContextDto userContextDto)
     {
         await foreach (var chunk in _innerService.GetGuidanceStreamingAsync(
-                           userMessage,
+                           userMsg,
                            conversationHistory,
                            userContextDto))
         {

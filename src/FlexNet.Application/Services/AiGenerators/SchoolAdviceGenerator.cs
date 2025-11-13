@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services.AiGenerators;
 
-public class SchoolAdviceGenerator
+public class SchoolAdviceGenerator : ISchoolAdviceGenerator
 {
    private readonly ILogger<SchoolAdviceGenerator> _logger;
    private readonly SchoolResponseFormatter _formatter;
@@ -22,13 +22,13 @@ public class SchoolAdviceGenerator
       _aiClient = apiClient ??  throw new ArgumentNullException(nameof(apiClient));
    }
 
-   public async Task<Result<string>> GenerateAdviceAsync(string userMessage, List<School> schools,
+   public async Task<Result<string>> GenerateAdviceAsync(string userMsg, List<School> schools,
       UserContextDto userContext)
    {
       try
       {
          // 1. Build prompt
-         var prompt = BuildPrompt(userMessage, schools, userContext);
+         var prompt = BuildPrompt(userMsg, schools, userContext);
             
          // 2. Call API
          var result = await _aiClient.CallAsync(prompt);
@@ -37,7 +37,7 @@ public class SchoolAdviceGenerator
          if (!result.IsSuccess)  
          {
             _logger.LogWarning("Failed to generate school advice: {Error}", result.Error?.Message);
-            return await GetFallbackAdvice(userMessage, userContext);  
+            return await GetFallbackAdvice(userMsg, userContext);  
          }
             
          // 4. Format with schools (on SUCCESS)
@@ -47,49 +47,67 @@ public class SchoolAdviceGenerator
       catch (Exception ex)
       {
          _logger.LogError(ex, "Error generating school advice");
-         return await GetFallbackAdvice(userMessage, userContext);
+         return await GetFallbackAdvice(userMsg, userContext);
       }
    }
 
-   private static string BuildPrompt(string userMessage, List<School> schools, UserContextDto userContext)
+   private static string BuildPrompt(string userMsg, List<School> schools, UserContextDto userContext)
    {
       var prompt = new StringBuilder();
-      prompt.AppendLine($"En {userContext.Age}-årig elev frågade: '{userMessage}'");
+      prompt.AppendLine($"En {userContext.Age}-årig elev frågade: '{userMsg}'");
       prompt.AppendLine();
       prompt.AppendLine($"Jag har visat dem {schools.Count} gymnasieskolor från Skolverkets officiella register:");
         
       // Give AI contextDto about which schools
-      foreach (var school in schools.Take(3))
+      foreach (var school in schools.Take(5))
       {
-         prompt.AppendLine($"- {school.Name} i {school.Municipality}");
+         prompt.AppendLine($"**{school.Name}** ({school.Municipality})");
+        
+         // Programs offered
+         if (school.Programs.Any())
+         {
+            var programs = string.Join(", ", school.Programs.Take(3).Select(p => p.Name));
+            prompt.AppendLine($"  Program: {programs}");
+         }
+        
+         // Contact details
+         if (!string.IsNullOrEmpty(school.WebsiteUrl))
+            prompt.AppendLine($"  Webbsida: {school.WebsiteUrl}");
+            
+         if (!string.IsNullOrEmpty(school.Phone))
+            prompt.AppendLine($"  Telefon: {school.Phone}");
+            
+         if (!string.IsNullOrEmpty(school.Email))
+            prompt.AppendLine($"  E-post: {school.Email}");
       }
         
       prompt.AppendLine();
-      prompt.AppendLine("Skriv 3-4 meningar på svenska som:");
+      prompt.AppendLine("Skriv 3-5 meningar på svenska som:");
       prompt.AppendLine("1. Bekräftar deras intresse för teknik/utbildning");
-      prompt.AppendLine("2. Uppmuntrar dem att besöka skolornas webbsidor");
-      prompt.AppendLine("3. Föreslår att gå på öppet hus-dagar");
-      prompt.AppendLine("4. Erbjuder hjälp med fler frågor");
+      prompt.AppendLine("2. Refererar till SPECIFIKA skolor och deras program");
+      prompt.AppendLine("3. Uppmuntrar att besöka webbsidor (nämn specifika URL:er)");
+      prompt.AppendLine("4. Föreslår att kontakta skolor direkt (nämn telefonnummer eller e-post)");
+      prompt.AppendLine("5. Erbjuder hjälp med fler frågor");
       prompt.AppendLine();
-      prompt.AppendLine("Var varm, stödjande och uppmuntrande.");
-      prompt.AppendLine("Skriv ENDAST uppmuntran-texten (inga listor, inga skolnamn).");
+      prompt.AppendLine("Var varm, personlig och specifik. Använd den information jag gav dig om skolorna.");
+      prompt.AppendLine("Skriv ENDAST rådgivningstexten (inga listor med skolor - jag visar dem separat).");
         
       return prompt.ToString();
   
    }
 
-   private async Task<Result<string>> GetFallbackAdvice(string userMessage, UserContextDto userContextDto)
+   private async Task<Result<string>> GetFallbackAdvice(string userMsg, UserContextDto userContextDto)
    {
-      var rawMessage = ExtractRawMessage(userMessage);
+      var rawMsg = ExtractRawMessage(userMsg);
     
       // Check if asking about schools but vague
-      var isSchoolQuery = SourceArray.Any(k => rawMessage.Contains(k, StringComparison.InvariantCultureIgnoreCase));
+      var isSchoolQuery = SourceArray.Any(k => rawMsg.Contains(k, StringComparison.InvariantCultureIgnoreCase));
 
       var prompt =
          // Regular counseling
          // Give AI contextDto to ask the right questions
          isSchoolQuery ? $"""
-                          En {userContextDto.Age}-årig elev frågade: '{rawMessage}'
+                          En {userContextDto.Age}-årig elev frågade: '{rawMsg}'
 
                           Eleven är intresserad av gymnasieutbildning men har inte varit specifik ännu.
 
@@ -99,7 +117,7 @@ public class SchoolAdviceGenerator
 
                           Ställ EN vänlig fråga på svenska för att förstå deras intressen bättre.
                           Var varm och uppmuntrande.
-                          """ : userMessage;
+                          """ : userMsg;
     
       var result = await _aiClient.CallAsync(prompt);
       return result;

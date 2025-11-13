@@ -17,23 +17,23 @@ namespace FlexNet.Application.Tests
        public async Task GetGuidanceAsync_SuccessOnFirstAttempt_ReturnSuccess()
        {
            // ARRANGE
-           var userMessage = "I'm feeling unsure of what kind of education I should go after Högstadiet";
+           var userMsg = "I'm feeling unsure of what kind of education I should go after Högstadiet";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
+           var context = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
 
            var expectedContent = "I understand that it seems unsure but let me help guiding you to your future";
            var successResult = Result<string>.Success(expectedContent);
     
            var mockInnerService = new Mock<IGuidanceService>();
            mockInnerService
-               .Setup(s => s.GetGuidanceAsync(userMessage, conversationHistory, studentContext))
+               .Setup(s => s.GetGuidanceAsync(userMsg, conversationHistory, context))
                .ReturnsAsync(successResult);  
     
            var mockLogger = new Mock<ILogger<GuidanceService>>();
            var guidanceService = new GuidanceService(mockInnerService.Object, mockLogger.Object);
     
            // ACT
-           var result = await guidanceService.GetGuidanceAsync(userMessage, conversationHistory, studentContext);
+           var result = await guidanceService.GetGuidanceAsync(userMsg, conversationHistory, context);
     
            // ASSERT
            Assert.True(result.IsSuccess);
@@ -41,22 +41,22 @@ namespace FlexNet.Application.Tests
            Assert.Null(result.Error);
     
            mockInnerService.Verify(
-               s => s.GetGuidanceAsync(userMessage, conversationHistory, studentContext),
+               s => s.GetGuidanceAsync(userMsg, conversationHistory, context),
                Times.Once);  
        }
        [Fact]
        public async Task GetGuidanceAsync_RetriesOnNetworkError_EventuallySucceeds()
        {
            // ARRANGE
-           var userMessage = "I'm feeling unsure of what kind of education I should go after Högstadiet";
+           var userMsg = "I'm feeling unsure of what kind of education I should go after Högstadiet";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
+           var context = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
 
            var expectedContent = "Finally worked!";  
     
            var mockInnerService = new Mock<IGuidanceService>();
            mockInnerService
-               .SetupSequence(s => s.GetGuidanceAsync(userMessage, conversationHistory, studentContext))
+               .SetupSequence(s => s.GetGuidanceAsync(userMsg, conversationHistory, context))
                .Throws(ServiceException.NetworkError("First failure"))
                .Throws(ServiceException.NetworkError("Second failure"))
                .ReturnsAsync(Result<string>.Success(expectedContent));  
@@ -64,7 +64,7 @@ namespace FlexNet.Application.Tests
            var guidanceService = new GuidanceService(mockInnerService.Object, mockLogger.Object);
     
            // ACT
-           var result = await guidanceService.GetGuidanceAsync(userMessage, conversationHistory, studentContext);
+           var result = await guidanceService.GetGuidanceAsync(userMsg, conversationHistory, context);
     
            // ASSERT
            Assert.True(result.IsSuccess);
@@ -72,7 +72,7 @@ namespace FlexNet.Application.Tests
            Assert.Null(result.Error);
     
            mockInnerService.Verify(
-               s => s.GetGuidanceAsync(userMessage, conversationHistory, studentContext),
+               s => s.GetGuidanceAsync(userMsg, conversationHistory, context),
                Times.Exactly(3));  
        }
 
@@ -81,19 +81,19 @@ namespace FlexNet.Application.Tests
        {
            // ARRANGE
 
-           var userMessage = "I need help with my future";
+           var userMsg = "I need help with my future";
            var conversationHistory = Enumerable.Empty<ConversationMessage>();
-           var studentContext = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
+           var context = new UserContextDto(Age: 16, Gender: null, Education: null, Purpose: null);
            var expectedContent = "Invalid API key";
            
            var mockInnerService = new Mock<IGuidanceService>();
-           mockInnerService.Setup(s => s.GetGuidanceAsync(userMessage, conversationHistory, studentContext)).Throws(ServiceException.AuthenticationFailed(expectedContent));
+           mockInnerService.Setup(s => s.GetGuidanceAsync(userMsg, conversationHistory, context)).Throws(ServiceException.AuthenticationFailed(expectedContent));
            var mockLogger = new Mock<ILogger<GuidanceService>>();
            var guidanceService = new GuidanceService(mockInnerService.Object, mockLogger.Object);
            
            // ACT
     
-           var result = await guidanceService.GetGuidanceAsync(userMessage, conversationHistory, studentContext);
+           var result = await guidanceService.GetGuidanceAsync(userMsg, conversationHistory, context);
            // ASSERT
            
            Assert.False(result.IsSuccess);
@@ -101,7 +101,7 @@ namespace FlexNet.Application.Tests
            Assert.NotNull(result.Error);
             Assert.Equal("AUTHENTICATION_ERROR", result.Error.ErrorCode);
             Assert.False(result.Error.CanRetry);
-           mockInnerService.Verify(s => s.GetGuidanceAsync(userMessage, conversationHistory, studentContext),
+           mockInnerService.Verify(s => s.GetGuidanceAsync(userMsg, conversationHistory, context),
                Times.Once);
 
        }

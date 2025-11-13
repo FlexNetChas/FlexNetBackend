@@ -4,6 +4,7 @@ using FlexNet.Application.Interfaces;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Services;
+using FlexNet.Application.Services.AiGenerators;
 using FlexNet.Application.Services.Formatters;
 using FlexNet.Infrastructure.Data;
 using FlexNet.Infrastructure.Interfaces;
@@ -36,6 +37,11 @@ public static class DependencyInjection
         services.AddSingleton<IEncryptionKeyProvider, KeyVaultEncryptionKeyProvider>();
         services.AddScoped<SchoolResponseFormatter>();
         services.AddScoped<IAiClient, GeminiApiClient>();
+        services.AddScoped<IRegularCounselingGenerator, RegularCounselingGenerator>();
+        services.AddScoped<ISchoolAdviceGenerator, SchoolAdviceGenerator>();
+        services.AddScoped<INoResultsGenerator, NoResultsGenerator>();
+        services.AddScoped<ISchoolSearchDetector, SchoolSearchDetector>();
+        
         services.AddSingleton<IEncryptionService>(sp =>
         {
             var keyProvider = sp.GetRequiredService<IEncryptionKeyProvider>();
@@ -54,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IUserContextService, ExtractUserIdService>();
 
         // Add Guidance service
+        services.AddScoped<IGuidanceRouter, GuidanceRouter>();  
         services.AddScoped<GeminiGuidanceService>();
         services.AddScoped<IGuidanceService>(provider =>
         {

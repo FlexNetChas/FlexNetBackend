@@ -11,12 +11,12 @@ namespace FlexNet.Application.Interfaces.IServices
 {
     public interface IGuidanceService
     {
-        Task<Result<string>> GetGuidanceAsync(string userMessage, IEnumerable<ConversationMessage> conversationHistory,
+        Task<Result<string>> GetGuidanceAsync(string userMsg, IEnumerable<ConversationMessage> conversationHistory,
             UserContextDto userContextDto);
 
         Task<Result<string>> GenerateTitleAsync(IEnumerable<ConversationMessage> conversationHistory, UserContextDto? userContextDto = null);
         IAsyncEnumerable<Result<string>> GetGuidanceStreamingAsync(
-            string userMessage, 
+            string userMsg, 
             IEnumerable<ConversationMessage> conversationHistory,
             UserContextDto userContextDto);
     }
