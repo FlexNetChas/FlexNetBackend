@@ -146,6 +146,36 @@ public class UserService : IUserService
         );
     }
 
+    public async Task<bool> DeleteUserAccountAsync(int userId, int requestingUserId)
+    {
+        // Ensure that a user can only delete their own account. requestingUserId is user id provided from the JWT token claims
+        if (userId != requestingUserId)
+        {
+            throw new UnauthorizedAccessException("You can only delete your own account");
+        }
+
+        // Check if user exists
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User not found");
+        }
+
+        try
+        {
+            // Let EF handle the cascade delete
+            var deleted = await _userRepository.DeleteAsync(userId);
+
+            return deleted;
+        }
+        catch (Exception ex)
+        {
+ 
+            throw new Exception("An error occurred while deleting the user account", ex);
+        }
+    }
+
+
     public UserDto MapToDto(User user)
     {
         return new UserDto(
