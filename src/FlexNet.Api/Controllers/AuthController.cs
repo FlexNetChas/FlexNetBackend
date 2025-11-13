@@ -43,7 +43,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         var response = await _userService.RegisterAsync(request);
-        return CreatedAtAction(nameof(GetUser), new { id = response.User.Id }, response);
+        return StatusCode(201, response); 
     }
 
     [HttpPost("refresh")]
@@ -54,15 +54,14 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("user/{id}")]
-    [EnableRateLimiting("global-quota")]
-    public async Task<IActionResult> GetUser(int id)
-    {
-        var user = await _userService.GetByIdAsync(id);
-        var userDto = _userService.MapToDto(user);
+    //[HttpGet("user/{id}")]
+    //public async Task<IActionResult> GetUser(int id)
+    //{
+    //    var user = await _userService.GetByIdAsync(id);
+    //    var userDto = _userService.MapToDto(user);
 
-        return Ok(userDto);
-    }
+    //    return Ok(userDto);
+    //}
 
     [HttpDelete("user/{id}")]
     [EnableRateLimiting("global-quota")]
