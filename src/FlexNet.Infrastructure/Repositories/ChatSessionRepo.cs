@@ -14,10 +14,21 @@ namespace FlexNet.Infrastructure.Repositories
             _context = ctx;
         }
 
+        /* Query optimization
+         * Use AsNoTracking() for read-only queries. We don't need change tracking for READ-ONLY operations
+         * Navigation props don't need to be included if we only want session metadata
+         * Use OrderByDescending() when presentation data. Dosn't affect DB performance but improves UX
+         * 
+         * References:
+         * https://learn.microsoft.com/en-us/ef/core/performance/efficient-querying
+         * https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore.entityframeworkqueryableextensions.asnotracking?view=efcore-9.0
+         */
         public async Task<List<ChatSession>> GetAllAsync(int UserID)
         {
             var usersChatSessions = await _context.ChatSessions
+                .AsNoTracking() 
                 .Where(s => s.UserId == UserID)
+                .OrderByDescending(s => s.StartedTime) 
                 .ToListAsync();
 
             return usersChatSessions;
@@ -26,9 +37,11 @@ namespace FlexNet.Infrastructure.Repositories
         public async Task<ChatSession?> GetByIdAsync(int SessionID, int UserID)
         {
             return await _context.ChatSessions
-                .Where(s => s.UserId == UserID && s.Id == SessionID)
-                .Include(s => s.ChatMessages)
-                .FirstOrDefaultAsync();
+            .AsNoTracking() 
+            .AsSplitQuery() 
+            .Where(s => s.UserId == UserID && s.Id == SessionID)
+            .Include(s => s.ChatMessages.OrderBy(m => m.TimeStamp)) 
+            .FirstOrDefaultAsync();
         }
 
         public async Task<ChatSession> AddAsync(ChatSession entity)
@@ -45,7 +58,7 @@ namespace FlexNet.Infrastructure.Repositories
                 .Include(s => s.ChatMessages)
                 .FirstOrDefaultAsync(s => s.Id == entity.Id && s.UserId == entity.UserId);
 
-            if (chatSession == null)
+            if (chatSession is null)
                 return null;
 
             chatSession.Summary = entity.Summary;
@@ -80,17 +93,11 @@ namespace FlexNet.Infrastructure.Repositories
 
         public async Task<bool> DeleteAsync(int id, int UserID)
         {
-            var chatSession = await _context.ChatSessions
+            var deletedCount = await _context.ChatSessions
                 .Where(s => s.UserId == UserID && s.Id == id)
-                .FirstOrDefaultAsync();
+                .ExecuteDeleteAsync();
 
-            if (chatSession == null)
-                return false;
-
-            _context.ChatSessions.Remove(chatSession);
-            await _context.SaveChangesAsync();
-
-            return true;
+            return deletedCount > 0;
         }
     }
 }
