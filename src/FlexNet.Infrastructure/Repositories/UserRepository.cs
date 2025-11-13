@@ -21,9 +21,6 @@ public class UserRepository : IUserRepo
         return await _context.Users
             .AsNoTracking()
             .AsSplitQuery()
-            //.Include(u => u.Avatar)
-            //.Include(u => u.UserDescription)
-            //.Include(u => u.ChatSessions)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
@@ -51,29 +48,3 @@ public class UserRepository : IUserRepo
         return deletedCount > 0;
     }
 }
-
-
-/*  Removed for now to avoid overfetching data and unsued calls
- 
-     public async Task<IEnumerable<User>> GetAllAsync()
-    {
-        return await _context.Users
-            .Include(u => u.Avatar)
-            .Include(u => u.UserDescription)
-            .Include(u => u.ChatSessions)
-            .ToListAsync();
-    }
-
-    public async Task<User> UpdateAsync(User user)
-    {
-        _context.Users.Update(user);
-        await _context.SaveChangesAsync();
-        return user;
-    }
-
-    public async Task<bool> ExistsAsync(int id)
-    {
-        return await _context.Users.AnyAsync(u => u.Id == id);
-    }
-
- */

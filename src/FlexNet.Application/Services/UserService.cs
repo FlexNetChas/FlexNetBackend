@@ -161,20 +161,3 @@ public class UserService : IUserService
         );
     }
 }
-
-
-/* Removed Service - Not in used
- 
-    public async Task<User> UpdateAsync(User user)
-    {
-        return await _userRepository.UpdateAsync(user);
-    }
-
-    public async Task<IEnumerable<User>> GetAllAsync()
-    {
-        return await _userRepository.GetAllAsync();
-    }
-
-
-
- */
