@@ -1,6 +1,5 @@
 ﻿using FlexNet.Application.DTOs.Auth.Request;
 using FlexNet.Application.Interfaces.IServices;
-using FlexNet.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -43,7 +42,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         var response = await _userService.RegisterAsync(request);
-        return CreatedAtAction(nameof(GetUser), new { id = response.User.Id }, response);
+        return StatusCode(201, response); 
     }
 
     [HttpPost("refresh")]
@@ -52,16 +51,6 @@ public class AuthController : ControllerBase
     {
         var response = await _tokenService.RefreshTokenAsync(request.RefreshToken);
         return Ok(response);
-    }
-
-    [HttpGet("user/{id}")]
-    [EnableRateLimiting("global-quota")]
-    public async Task<IActionResult> GetUser(int id)
-    {
-        var user = await _userService.GetByIdAsync(id);
-        var userDto = _userService.MapToDto(user);
-
-        return Ok(userDto);
     }
 
     [HttpDelete("user/{id}")]
