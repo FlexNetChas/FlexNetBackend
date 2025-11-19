@@ -36,6 +36,7 @@ namespace FlexNet.Application
             services.AddScoped<SendCounsellingMessageStreaming>();
             services.AddScoped<MessagePersistence>();
             services.AddScoped<MessageContextPreparation>();
+            services.AddScoped<IUserDataExportService, UserDataExportService>();
             
             
             /* Register FluentValidation validators from Application assembly.
