@@ -5,7 +5,7 @@ namespace FlexNet.Application.Services.Formatters;
 
 public class SchoolResponseFormatter
 {
-    public static string FormatSchoolList(string aiAdvice, List<School> schools)
+    public static string FormatSchoolList(string? aiAdvice, List<School> schools)
     {
         
         var response = new StringBuilder();

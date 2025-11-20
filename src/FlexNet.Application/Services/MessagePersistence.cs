@@ -32,7 +32,7 @@ public class MessagePersistence
     }
 
     public async Task<string> SaveMessagesAndGenerateTitleAsync(
-        ChatSession session,
+        ChatSession? session,
         string userMsgText,
         string aiResponseText,
         UserContextDto userContext,
@@ -50,46 +50,51 @@ public class MessagePersistence
         }
 
         // 2. Create and save both messages
-        var userMsg = _chatMessageCreator.Create(
-            session.Id!.Value,
-            userMsgText,
-            MessageRoles.User);
-
-        var aiMessage = _chatMessageCreator.Create(
-            session.Id.Value,
-            safeResponse,
-            MessageRoles.Assistant);
-        
-        session.ChatMessages.Add(userMsg);
-        session.ChatMessages.Add(aiMessage);
-
-        var isFirstExchange = session.ChatMessages.Count == 2;
-
-        await _chatSessionRepo.UpdateAsync(session);
-        
-        // 3. Generate title if first exchange
-
-        if (!isFirstExchange) return safeResponse;
-        var historyForTitle = new List<ConversationMessage>
+        if (session != null)
         {
-            new(userMsg.Role, userMsg.MessageText),
-            new(aiMessage.Role, aiMessage.MessageText)
-        };
-        var titleResult = await _guidanceService.GenerateTitleAsync(historyForTitle, userContext);
+            var userMsg = _chatMessageCreator.Create(
+                session.Id!.Value,
+                userMsgText,
+                MessageRoles.User);
 
-        if (titleResult.IsSuccess)
-        {
+            var aiMessage = _chatMessageCreator.Create(
+                session.Id.Value,
+                safeResponse,
+                MessageRoles.Assistant);
+        
+            session.ChatMessages.Add(userMsg);
+            session.ChatMessages.Add(aiMessage);
 
-            // Reload session to avoid concurrency issues
-            session = await _chatSessionRepo.GetByIdAsync(session.Id.Value, userId);
-            session.Summary = titleResult.Data;
+            var isFirstExchange = session.ChatMessages.Count == 2;
+
             await _chatSessionRepo.UpdateAsync(session);
+        
+            // 3. Generate title if first exchange
 
-        }
-        else
-        {
-            _logger.LogWarning("❌ Failed to generate title: {Error}",
-                titleResult.Error?.Message);
+            if (!isFirstExchange) return safeResponse;
+            var historyForTitle = new List<ConversationMessage>
+            {
+                new(userMsg.Role, userMsg.MessageText),
+                new(aiMessage.Role, aiMessage.MessageText)
+            };
+            var titleResult = await _guidanceService.GenerateTitleAsync(historyForTitle, userContext);
+
+            if (titleResult.IsSuccess)
+            {
+
+                // Reload session to avoid concurrency issues
+                session = await _chatSessionRepo.GetByIdAsync(session.Id.Value, userId);
+                if (session != null)
+                {
+                    session.Summary = titleResult.Data;
+                    await _chatSessionRepo.UpdateAsync(session);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("❌ Failed to generate title: {Error}",
+                    titleResult.Error?.Message);
+            }
         }
 
         return safeResponse;
