@@ -65,7 +65,24 @@ public class GuidanceRouterTest
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         _regularGeneratorMock.Verify(g => g.GenerateAsync(userMsg, conversationHistory, context), Times.Once);
-        _adviceGeneratorMock.Verify(g => g.GenerateAdviceAsync(It.IsAny<string>(), It.IsAny<List<School>>(), It.IsAny<UserContextDto>()), Times.Never); 
-        _noResultsGeneratorMock.Verify(g => g.GenerateAsync(It.IsAny<string>(), It.IsAny<SchoolRequestInfo>(),It.IsAny<UserContextDto>()), Times.Never);
+        _adviceGeneratorMock.Verify(g => g.GenerateAdviceAsync(It.IsAny<string>(), It.IsAny<List<School>>(), It.IsAny<UserContextDto>(), It.IsAny<IEnumerable<ConversationMessage>?>()), Times.Never); 
+        _noResultsGeneratorMock.Verify(g => g.GenerateAsync(It.IsAny<string>(), It.IsAny<SchoolRequestInfo>(),It.IsAny<UserContextDto>(),It.IsAny<IEnumerable<ConversationMessage>?>()), Times.Never);
+        _adviceGeneratorMock.Setup(g => g.GenerateAdviceStreamingAsync(
+                It.IsAny<string>(), 
+                It.IsAny<List<School>>(), 
+                It.IsAny<UserContextDto>(),
+                It.IsAny<IEnumerable<ConversationMessage>?>()))
+            .Returns(CreateAsyncEnumerable(expectedResponse));
+        _noResultsGeneratorMock.Setup(g => g.GenerateStreamingAsync(
+                It.IsAny<string>(),
+                It.IsAny<SchoolRequestInfo>(),
+                It.IsAny<UserContextDto>(),
+                It.IsAny<IEnumerable<ConversationMessage>?>()))
+            .Returns(CreateAsyncEnumerable(expectedResponse));
+    }
+    private static async IAsyncEnumerable<Result<string>> CreateAsyncEnumerable(string response)
+    {
+        yield return Result<string>.Success(response);
+        await Task.CompletedTask;
     }
 }

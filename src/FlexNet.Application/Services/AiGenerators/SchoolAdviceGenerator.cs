@@ -1,8 +1,10 @@
 using System.Text;
 using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Interfaces.IServices;
+using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
 using FlexNet.Application.Services.Formatters;
+using FlexNet.Application.Services.Prompts;
 using FlexNet.Domain.Entities.Schools;
 using Microsoft.Extensions.Logging;
 
@@ -23,12 +25,13 @@ public class SchoolAdviceGenerator : ISchoolAdviceGenerator
    }
 
    public async Task<Result<string>> GenerateAdviceAsync(string userMsg, List<School> schools,
-      UserContextDto userContext)
+      UserContextDto userContext,
+      IEnumerable<ConversationMessage>? recentHistory = null)
    {
       try
       {
          // 1. Build prompt
-         var prompt = BuildPrompt(userMsg, schools, userContext);
+         var prompt = BuildPrompt(userMsg, schools, userContext, recentHistory);
             
          // 2. Call API
          var result = await _aiClient.CallAsync(prompt);
@@ -51,12 +54,62 @@ public class SchoolAdviceGenerator : ISchoolAdviceGenerator
       }
    }
 
-   private static string BuildPrompt(string userMsg, List<School> schools, UserContextDto userContext)
+   public async IAsyncEnumerable<Result<string>> GenerateAdviceStreamingAsync(string userMsg, List<School> schools, UserContextDto userContext,
+      IEnumerable<ConversationMessage>? recentHistory = null)
+   {
+      var prompt = BuildPrompt(userMsg, schools, userContext, recentHistory);
+
+      var hadSuccessfulChunk = false;
+
+      await foreach (var chunk in _aiClient.CallStreamingAsync(prompt))
+      {
+         if (chunk.IsSuccess)
+         {
+            hadSuccessfulChunk = true;
+            yield return chunk;
+         }
+         else
+         {
+            // If error occurs during streaming, log and use fallback
+            _logger.LogWarning("Streaming error: {Error}", chunk.Error?.Message);
+            
+            // If we haven't sent any chunks yet, try fallback
+            if (hadSuccessfulChunk) yield break;
+            var fallback = await GetFallbackAdvice(userMsg, userContext);
+            yield return fallback;
+
+            yield break;
+         }
+      }
+
+      if (hadSuccessfulChunk)
+      {
+         var schoolList = SchoolResponseFormatter.FormatSchoolListOnly(schools);
+         yield return Result<string>.Success(schoolList);
+      }
+   }
+
+   private static string BuildPrompt(string userMsg, List<School> schools, UserContextDto userContext,
+      IEnumerable<ConversationMessage>? recentHistory = null)
    {
       var prompt = new StringBuilder();
-      prompt.AppendLine($"En {userContext.Age}-årig elev frågade: '{userMsg}'");
+      //  System prompt
+      prompt.AppendLine(SystemPrompts.BuildSystemPrompt(userContext));
       prompt.AppendLine();
-      prompt.AppendLine($"Jag har visat dem {schools.Count} gymnasieskolor från Skolverkets officiella register:");
+    
+      //  Conversation history
+      if (recentHistory != null)
+      {
+         SystemPrompts.AppendConversationHistory(prompt, recentHistory);
+      }
+    
+      // Current query
+      prompt.AppendLine($"Eleven frågade nu: '{userMsg}'");
+      prompt.AppendLine();
+    
+      // School data (KEEP YOUR EXISTING CODE from Phase 1.5)
+      prompt.AppendLine($"Jag har visat dem {schools.Count} gymnasieskolor från officiella register:");
+      prompt.AppendLine();
         
       // Give AI contextDto about which schools
       foreach (var school in schools.Take(5))

@@ -3,6 +3,7 @@ using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
+using FlexNet.Application.Services.Prompts;
 using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services.AiGenerators;
@@ -18,10 +19,11 @@ public class NoResultsGenerator : INoResultsGenerator
    }
 
    public async Task<Result<string>> GenerateAsync(string userMsg, SchoolRequestInfo searchCriteria,
-      UserContextDto userContextDto)
+      UserContextDto userContextDto,
+      IEnumerable<ConversationMessage>? recentHistory = null)
    {
       // 1. Build prompt
-      var prompt = BuildPrompt(userMsg, searchCriteria, userContextDto);
+      var prompt = BuildPrompt(userMsg, searchCriteria, userContextDto, recentHistory);
       
       // 2. Call API
       var result =  await _aiClient.CallAsync(prompt);
@@ -33,23 +35,65 @@ public class NoResultsGenerator : INoResultsGenerator
       _logger.LogWarning("Failed to generate counseling response: {Error}", result.Error?.Message);
       return GetFallbackMessage();
    }
-
+   public async IAsyncEnumerable<Result<string>> GenerateStreamingAsync(
+      string userMsg,
+      SchoolRequestInfo searchCriteria,
+      UserContextDto userContextDto,
+      IEnumerable<ConversationMessage>? recentHistory = null)
+   {
+      // 1. Build prompt (same as non-streaming)
+      var prompt = BuildPrompt(userMsg, searchCriteria, userContextDto, recentHistory);
+    
+      // 2. Track if we had successful chunks
+      var hadSuccessfulChunk = false;
+    
+      // 3. Stream AI response
+      await foreach (var chunk in _aiClient.CallStreamingAsync(prompt))
+      {
+         if (chunk.IsSuccess)
+         {
+            hadSuccessfulChunk = true;
+            yield return chunk;
+         }
+         else
+         {
+            _logger.LogWarning("Streaming error: {Error}", chunk.Error?.Message);
+            
+            // If no successful chunks yet, use fallback
+            if (!hadSuccessfulChunk)
+            {
+               yield return GetFallbackMessage();
+            }
+            
+            yield break;
+         }
+      }
+   }
    private static string BuildPrompt(string userMsg, SchoolRequestInfo request,
-      UserContextDto userContextDto)
+      UserContextDto userContextDto,
+      IEnumerable<ConversationMessage>? recentHistory = null)
    {
               var prompt = new StringBuilder();
-              
-              prompt.AppendLine($"En {userContextDto.Age}-årig elev frågade: '{userMsg}'");
+              // System prompt
+              prompt.AppendLine(SystemPrompts.BuildSystemPrompt(userContextDto));
+              prompt.AppendLine();
+    
+              // Conversation history
+              if (recentHistory != null)
+              {
+                 SystemPrompts.AppendConversationHistory(prompt, recentHistory);
+              }
+              prompt.AppendLine($"Eleven frågade nu: '{userMsg}'");
               prompt.AppendLine();
               prompt.AppendLine("Jag sökte i Skolverkets databas men hittade inga skolor som matchar:");
               
               if (!string.IsNullOrEmpty(request.Municipality))
                   prompt.AppendLine($"- Kommun: {request.Municipality}");
 
-              bool? any = request.ProgramCodes.Any();
+              bool? any = request.ProgramCodes != null && request.ProgramCodes.Count != 0;
 
               if (any == true)
-                  prompt.AppendLine($"- Program: {string.Join(", ", request.ProgramCodes)}");
+                 prompt.AppendLine($"- Program: {string.Join(", ", request.ProgramCodes!)}");
               
               prompt.AppendLine();
               prompt.AppendLine("Hjälp eleven på svenska genom att:");

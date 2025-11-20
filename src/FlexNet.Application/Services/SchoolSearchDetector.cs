@@ -20,7 +20,8 @@ public class SchoolSearchDetector : ISchoolSearchDetector
       _config = config ??  throw new ArgumentNullException(nameof(config));
    }
 
-public SchoolRequestInfo? DetectSchoolRequest(string message)
+public SchoolRequestInfo? DetectSchoolRequest(string message,
+    IEnumerable<ConversationMessage>? recentHistory = null)
         {
             // Extract raw message from XML context if present
             var rawMessage = ExtractRawMessage(message);
@@ -31,18 +32,24 @@ public SchoolRequestInfo? DetectSchoolRequest(string message)
             {
                 return null;
             }
+            var municipality = ExtractMunicipality(lowerMessage);
+            var programCodes = ExtractProgramCodes(lowerMessage);
+
+            if (programCodes is not { Count: 0 } && recentHistory != null)
+            {
+                programCodes = ExtractProgramCodesFromHistory(recentHistory);
+            }
             
             var request = new SchoolRequestInfo
             {
-                // Extract municipality
-                Municipality = ExtractMunicipality(lowerMessage),
-                // Extract program interests
-                ProgramCodes = ExtractProgramCodes(lowerMessage)
+                Municipality = municipality,
+                ProgramCodes = programCodes
             };
 
             // Validate: Must have at least municipality OR program
             if (request.Municipality != null ||
                 (request.ProgramCodes != null && request.ProgramCodes.Count != 0)) return request;
+            
             return null;
 
         }
@@ -99,6 +106,30 @@ public SchoolRequestInfo? DetectSchoolRequest(string message)
                 }
             }
             
+            return detectedPrograms.Count != 0 ? detectedPrograms : null;
+        }
+        private List<string>? ExtractProgramCodesFromHistory(IEnumerable<ConversationMessage> history)
+        {
+            var detectedPrograms = new List<string>();
+        
+            // Look at last 3 user messages
+            var recentUserMessages = history
+                .Where(m => m.Role == "user")
+                .TakeLast(3)
+                .Select(m => m.Content.ToLowerInvariant());
+        
+            foreach (var message in recentUserMessages)
+            {
+                var messageWithSpaces = " " + message + " ";
+            
+                foreach (var (code, keywords) in _config.ProgramKeywords)
+                {
+                    if (!keywords.Any(keyword => messageWithSpaces.Contains(keyword))) continue;
+                    if (!detectedPrograms.Contains(code))
+                        detectedPrograms.Add(code);
+                }
+            }
+        
             return detectedPrograms.Count != 0 ? detectedPrograms : null;
         }
 }

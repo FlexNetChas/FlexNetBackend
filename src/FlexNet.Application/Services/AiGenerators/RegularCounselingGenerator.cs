@@ -3,6 +3,7 @@ using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
+using FlexNet.Application.Services.Prompts;
 using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services.AiGenerators;
@@ -67,19 +68,13 @@ public class RegularCounselingGenerator : IRegularCounselingGenerator
         var prompt = new StringBuilder();
         
         // Add user context
-        prompt.AppendLine($"Du är en studie- och yrkesvägledare som hjälper en {userContextDto.Age}-årig elev.");
+        prompt.AppendLine(SystemPrompts.BuildSystemPrompt(userContextDto));
+
         prompt.AppendLine();
         
         // Add conversation history if exists
-        if (conversationHistory.Any())
-        {
-            prompt.AppendLine("Tidigare konversation:");
-            foreach (var message in conversationHistory.TakeLast(5))  // Last 5 messages for context
-            {
-                prompt.AppendLine($"{message.Role}: {message.Content}");
-            }
-            prompt.AppendLine();
-        }
+        SystemPrompts.AppendConversationHistory(prompt, conversationHistory, maxMessages: 5);
+
         
         // Add current message
         prompt.AppendLine($"Elev: {userMsg}");

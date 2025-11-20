@@ -38,7 +38,7 @@ public class GuidanceRouter : IGuidanceRouter
             var rawMsg = ExtractRawMessage(userMsg);
 
             // 2. Detect if school related query
-            var schoolRequest = _detector.DetectSchoolRequest(rawMsg);
+            var schoolRequest = _detector.DetectSchoolRequest(rawMsg, conversationHistory);
 
             if (schoolRequest == null)
                 return await _regularGenerator.GenerateAsync(userMsg, conversationHistory, userContextDto);
@@ -48,14 +48,15 @@ public class GuidanceRouter : IGuidanceRouter
             if (schools.Count != 0)
             {
                 // 4a. Delegate to AdviceGenerator
-                return await _adviceGenerator.GenerateAdviceAsync(rawMsg, schools, userContextDto);
+                return await _adviceGenerator.GenerateAdviceAsync(rawMsg, schools, userContextDto, conversationHistory);
             }
 
             // 4b. Delegate to NoResultGenerator
-            return await _noResultsGenerator.GenerateAsync(rawMsg, schoolRequest, userContextDto);
+            return await _noResultsGenerator.GenerateAsync(rawMsg, schoolRequest, userContextDto, conversationHistory);
 
 
             // 5. Regular counseling - delegate to RegularGenerator
+            
         }
         catch (Exception ex)
         {
@@ -74,12 +75,26 @@ public class GuidanceRouter : IGuidanceRouter
     {
         var rawMsg = ExtractRawMessage(userMsg);
 
-        var schoolRequest = _detector.DetectSchoolRequest(rawMsg);
+        var schoolRequest = _detector.DetectSchoolRequest(rawMsg, conversationHistory);
         if (schoolRequest != null)
         {
-            var result = await RouteAndExecuteAsync(userMsg, conversationHistory, userContextDto);
-            yield return result;
-            yield break;
+            var schools = await SearchSchools(schoolRequest);
+            if (schools.Count != 0)
+            {
+                await foreach (var chunk in _adviceGenerator.GenerateAdviceStreamingAsync(rawMsg, schools,
+                                   userContextDto, conversationHistory))
+                {
+                    yield return chunk;
+                }
+            }
+        }
+        else
+        {
+            await foreach (var chunk in _noResultsGenerator.GenerateStreamingAsync(rawMsg, schoolRequest!,
+                               userContextDto, conversationHistory))
+            {
+                yield return chunk;
+            }
         }
 
         await foreach (var chunk in _regularGenerator.GenerateStreamingAsync(userMsg, conversationHistory,
