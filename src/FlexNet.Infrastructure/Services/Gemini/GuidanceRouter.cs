@@ -76,29 +76,30 @@ public class GuidanceRouter : IGuidanceRouter
         var rawMsg = ExtractRawMessage(userMsg);
 
         var schoolRequest = _detector.DetectSchoolRequest(rawMsg, conversationHistory);
-        if (schoolRequest != null)
+
+        if (schoolRequest == null)
         {
-            var schools = await SearchSchools(schoolRequest);
-            if (schools.Count != 0)
+            await foreach (var chunk in _regularGenerator.GenerateStreamingAsync(userMsg, conversationHistory,
+                               userContextDto))
             {
-                await foreach (var chunk in _adviceGenerator.GenerateAdviceStreamingAsync(rawMsg, schools,
-                                   userContextDto, conversationHistory))
-                {
-                    yield return chunk;
-                }
-            }
+                yield return chunk;
+            } 
+            yield break;
         }
-        else
+     
+        var schools = await SearchSchools(schoolRequest);
+        if (schools.Count != 0)
         {
-            await foreach (var chunk in _noResultsGenerator.GenerateStreamingAsync(rawMsg, schoolRequest!,
+            await foreach (var chunk in _adviceGenerator.GenerateAdviceStreamingAsync(rawMsg, schools,
                                userContextDto, conversationHistory))
             {
                 yield return chunk;
             }
+            yield break;
         }
-
-        await foreach (var chunk in _regularGenerator.GenerateStreamingAsync(userMsg, conversationHistory,
-                           userContextDto))
+        
+        await foreach (var chunk in _noResultsGenerator.GenerateStreamingAsync(rawMsg, schoolRequest,
+                           userContextDto, conversationHistory))
         {
             yield return chunk;
         }
