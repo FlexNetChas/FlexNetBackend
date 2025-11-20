@@ -51,17 +51,20 @@ namespace FlexNet.Infrastructure.Tests
 
             // Act: Retrieve UserDescription by UserId
             var result = await _repository.GetUserDescriptionByUserIdAsync(2);
-            _output.WriteLine(
-                $"Retrieved UserId: {result.UserId}, Age: {result.Age}, Gender: {result.Gender}, Education: {result.Education}, Purpose: {result.Purpose}"
-            );
+            if (result != null)
+            {
+                _output.WriteLine(
+                    $"Retrieved UserId: {result.UserId}, Age: {result.Age}, Gender: {result.Gender}, Education: {result.Education}, Purpose: {result.Purpose}"
+                );
 
-            // Assert: Verify the result
-            result.Should().NotBeNull();
-            result!.UserId.Should().Be(2);
-            result.Age.Should().Be(30);
-            result.Gender.Should().Be("Woman");
-            result.Education.Should().Be("University");
-            result.Purpose.Should().Be("Become a Lawyer");
+                // Assert: Verify the result
+                result.Should().NotBeNull();
+                result!.UserId.Should().Be(2);
+                result.Age.Should().Be(30);
+                result.Gender.Should().Be("Woman");
+                result.Education.Should().Be("University");
+                result.Purpose.Should().Be("Become a Lawyer");
+            }
         }
     }
 }

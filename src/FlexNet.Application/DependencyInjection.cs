@@ -37,7 +37,7 @@ namespace FlexNet.Application
             services.AddScoped<MessagePersistence>();
             services.AddScoped<MessageContextPreparation>();
             services.AddScoped<IUserDataExportService, UserDataExportService>();
-            
+            services.AddScoped<IPromptEnricher, PromptEnricher>();
             
             /* Register FluentValidation validators from Application assembly.
              * AddValidatorsFromAssembly is an extension method from FluentValidation that scans 

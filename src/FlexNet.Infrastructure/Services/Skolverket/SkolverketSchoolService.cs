@@ -40,12 +40,6 @@ public class SkolverketSchoolService : ISchoolService
             var allSchools = await GetAllSchoolsAsync(cancellationToken);
             var filtered = FilterSchools(allSchools, criteria);
             
-            _logger.LogInformation(
-                "Search returned {Count} schools. Criteria: Municipality={Municipality}, Programs={Programs}, SearchText={SearchText}",
-                filtered.Count,
-                criteria.Municipality ?? "Any",
-                criteria.ProgramCodes != null ? string.Join(",", criteria.ProgramCodes) : "Any",
-                criteria.SearchText ?? "None");
             return Result<IEnumerable<School>>.Success(filtered);
         }
         catch (Exception ex)
@@ -81,11 +75,9 @@ public class SkolverketSchoolService : ISchoolService
 
             if (school != null)
             {
-                _logger.LogInformation("Found school {Code} in cache", schoolUnitCode);
                 return Result<School>.Success(school);
             }
             
-            _logger.LogInformation("School {Code} not in cache, fetching from API", schoolUnitCode);
             school = await FetchSchoolDetailAsync(schoolUnitCode, cancellationToken);
 
             if (school == null)
@@ -115,13 +107,10 @@ public class SkolverketSchoolService : ISchoolService
     {
         try
         {
-            _logger.LogInformation("Manually refreshing school cache");
-            
             _cache.Remove(CacheKey);
             
             var schools = await LoadAllSchoolsFromApiAsync(cancellationToken);
             
-            _logger.LogInformation("Cache refreshed with {Count} schools", schools.Count);
             return Result<int>.Success(schools.Count);
         }
         catch (Exception ex)
@@ -140,17 +129,14 @@ public class SkolverketSchoolService : ISchoolService
     {
         if (_cache.TryGetValue(CacheKey, out List<School>? cached) && cached != null)
         {
-            _logger.LogInformation("Returning {Count} schools from cache", cached.Count);
             return cached;
         }
-        _logger.LogInformation("Cache miss - loading schools from API");
         return await LoadAllSchoolsFromApiAsync(cancellationToken);
     }
 
     private async Task<List<School>> LoadAllSchoolsFromApiAsync(CancellationToken cancellationToken = default)
     {
         var startTime = DateTime.UtcNow;
-        _logger.LogInformation("Loading all gymnasium schools from Skolverket API");
 
         var listResponse = await _apiClient.GetAllGymnasiumSchoolAsync(cancellationToken);
         if (listResponse?.Data?.Attributes == null || listResponse.Data.Attributes.Count == 0)
@@ -164,7 +150,6 @@ public class SkolverketSchoolService : ISchoolService
             .Where(code => !string.IsNullOrWhiteSpace(code))
             .ToList();
 
-        _logger.LogInformation("Found {Count} active gymnasium schools to fetch", schoolCodes.Count);
 
         var fetchTasks = schoolCodes
             .Select(code => FetchSchoolDetailAsync(code, cancellationToken))
@@ -186,14 +171,8 @@ public class SkolverketSchoolService : ISchoolService
             }
         } 
         var elapsed = DateTime.UtcNow - startTime;
-        _logger.LogInformation(
-            "Loaded {ValidCount} of {TotalCount} schools in {Seconds:F1} seconds",
-            validSchools.Count,
-            schoolCodes.Count,
-            elapsed.TotalSeconds);
         
         _cache.Set(CacheKey, validSchools, CacheDuration);
-        _logger.LogInformation("Schools cahced for {Days} days", CacheDuration.TotalDays);
         
         return validSchools;
     }

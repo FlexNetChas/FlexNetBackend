@@ -1,7 +1,7 @@
 namespace FlexNet.Application.Models.Records;
 
 public record SchoolSearchCriteria(
-    string? Municipality = null,
-    IReadOnlyList<string>? ProgramCodes = null,
-    string? SearchText = null,
-    int? MaxResult = 100);
+    string? Municipality ,
+    IReadOnlyList<string>? ProgramCodes,
+    string? SearchText ,
+    int? MaxResult );
