@@ -44,7 +44,7 @@ public class SchoolAdviceGenerator : ISchoolAdviceGenerator
          }
             
          // 4. Format with schools (on SUCCESS)
-         var formatted = _formatter.FormatSchoolList(result.Data, schools);
+         var formatted = SchoolResponseFormatter.FormatSchoolList(result.Data, schools);
          return Result<string>.Success(formatted);
       }
       catch (Exception ex)

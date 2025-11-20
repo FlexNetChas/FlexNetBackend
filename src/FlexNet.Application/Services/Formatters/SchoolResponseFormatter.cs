@@ -5,7 +5,7 @@ namespace FlexNet.Application.Services.Formatters;
 
 public class SchoolResponseFormatter
 {
-    public string FormatSchoolList(string aiAdvice, List<School> schools)
+    public static string FormatSchoolList(string aiAdvice, List<School> schools)
     {
         
         var response = new StringBuilder();
@@ -30,7 +30,7 @@ public class SchoolResponseFormatter
         var response = new StringBuilder();
         
         response.AppendLine("\n\n---\n");
-        response.AppendLine("**Schools from Skolverkets oficial register:**\n");
+        response.AppendLine("**Schools from Skolverkets official register:**\n");
         
         foreach (var school in schools)
         {
