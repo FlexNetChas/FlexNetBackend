@@ -29,10 +29,7 @@ namespace FlexNet.Application
             services.AddScoped<ConversationContextbuilder>();
             services.AddSingleton<SchoolSearchConfiguration>();
             services.AddScoped<SchoolSearchDetector>();
-            services.AddScoped<SchoolAdviceGenerator>();
             services.AddScoped<TitleGenerator>();
-            services.AddScoped<RegularCounselingGenerator>();
-            services.AddScoped<NoResultsGenerator>();
             services.AddScoped<SendCounsellingMessageStreaming>();
             services.AddScoped<MessagePersistence>();
             services.AddScoped<MessageContextPreparation>();

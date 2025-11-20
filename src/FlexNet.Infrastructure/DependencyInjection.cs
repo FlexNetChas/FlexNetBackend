@@ -36,9 +36,6 @@ public static class DependencyInjection
         services.AddScoped<IChatSessionRepo, ChatSessionRepo>();
         services.AddScoped<SchoolResponseFormatter>();
         services.AddScoped<IAiClient, GeminiApiClient>();
-        services.AddScoped<IRegularCounselingGenerator, RegularCounselingGenerator>();
-        services.AddScoped<ISchoolAdviceGenerator, SchoolAdviceGenerator>();
-        services.AddScoped<INoResultsGenerator, NoResultsGenerator>();
         services.AddScoped<ISchoolSearchDetector, SchoolSearchDetector>();
         services.AddScoped<IUserDataRepo, UserDataRepository>();
         
