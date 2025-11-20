@@ -98,7 +98,6 @@ public class SkolverketMapper
             .Select(code => CreateProgram(code))
             .ToList();
         return programs;
-        ;
     }
 
     private SchoolProgram CreateProgram(string code)

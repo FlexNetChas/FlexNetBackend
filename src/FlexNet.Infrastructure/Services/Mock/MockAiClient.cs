@@ -26,31 +26,47 @@ public class MockAiClient : IAiClient
     public async Task<Result<string>> CallAsync(string prompt)
     {
         _logger.LogInformation("🎭 MOCK: AI call intercepted (no real API call made)");
-        _logger.LogDebug("Mock prompt length: {Length} characters", prompt.Length);
-        
-        // Simulate network delay (makes dev feel more realistic)
+    
         var delay = _random.Next(_minDelayMs, _maxDelayMs);
         await Task.Delay(delay);
-        
-        // Detect prompt type and return appropriate response
-        var promptType = DetectPromptType(prompt);
-        var response = GenerateResponse(promptType, prompt);
-        
-        _logger.LogInformation("🎭 MOCK: Returned {Type} response ({Chars} chars) after {Delay}ms", 
-            promptType, response.Length, delay);
-        
+    
+        // Check if it's a title request
+        string response;
+        if (IsTitleRequest(prompt))
+        {
+            response = GenerateRandomTitle();
+            _logger.LogInformation("🎭 MOCK: Generated title ({Chars} chars) after {Delay}ms", 
+                response.Length, delay);
+        }
+        else
+        {
+            response = GenerateRandomResponse();
+            _logger.LogInformation("🎭 MOCK: Generated counseling response ({Chars} chars) after {Delay}ms", 
+                response.Length, delay);
+        }
+    
         return Result<string>.Success(response);
     }
 
     public async IAsyncEnumerable<Result<string>> CallStreamingAsync(string prompt)
     {
-        _logger.LogInformation("Mock streaming AI call with prompt length: {Length}", prompt.Length);
+        _logger.LogInformation("🎭 MOCK: Streaming AI call (prompt: {Length} chars)", prompt.Length);
 
         // Simulate delay before first chunk
         await Task.Delay(_random.Next(_minDelayMs, _maxDelayMs));
 
-        // Generate mock response
-        var fullResponse = GenerateResponse(PromptType.RegularCounseling, prompt); // Use your existing method
+        // Check if it's a title request (titles don't need streaming)
+        if (IsTitleRequest(prompt))
+        {
+            var title = GenerateRandomTitle();
+            _logger.LogInformation("🎭 MOCK: Generated title for streaming");
+            yield return Result<string>.Success(title);
+            yield break;
+        }
+
+        // Generate full response
+        var fullResponse = GenerateRandomResponse();
+        _logger.LogInformation("🎭 MOCK: Streaming counseling response ({Chars} chars)", fullResponse.Length);
 
         // Split into chunks (simulate streaming)
         var words = fullResponse.Split(' ');
@@ -59,164 +75,51 @@ public class MockAiClient : IAiClient
         for (int i = 0; i < words.Length; i += chunkSize)
         {
             var chunk = string.Join(" ", words.Skip(i).Take(chunkSize));
-        
+    
             if (!string.IsNullOrWhiteSpace(chunk))
             {
                 yield return Result<string>.Success(chunk + " ");
-            
+        
                 // Small delay between chunks to simulate real streaming
                 await Task.Delay(_random.Next(50, 150));
             }
         }
 
-        _logger.LogInformation("Mock streaming completed");
+        _logger.LogInformation("🎭 MOCK: Streaming completed");
     }
 
-    private PromptType DetectPromptType(string prompt)
+    private bool IsTitleRequest(string prompt)
     {
         var lower = prompt.ToLowerInvariant();
-        
-        // Title generation prompt
-        if (lower.Contains("title") && lower.Contains("conversation"))
-            return PromptType.Title;
-        
-        // School advice prompt
-        if (lower.Contains("gymnasieskolor") && lower.Contains("skolverkets"))
-            return PromptType.SchoolAdvice;
-        
-        // No results prompt
-        if (lower.Contains("hittade inga skolor"))
-            return PromptType.NoResults;
-        
-        // Regular counseling
-        return PromptType.RegularCounseling;
+        return lower.Contains("title") && lower.Contains("conversation");
     }
 
-    private string GenerateResponse(PromptType type, string prompt)
+    private string GenerateRandomTitle()
     {
-        return type switch
-        {
-            PromptType.Title => GenerateTitleResponse(),
-            PromptType.SchoolAdvice => GenerateSchoolAdviceResponse(prompt),
-            PromptType.NoResults => GenerateNoResultsResponse(prompt),
-            PromptType.RegularCounseling => GenerateRegularCounselingResponse(prompt),
-            _ => "Tack för din fråga! Jag är här för att hjälpa dig."
-        };
-    }
-
-    private string GenerateTitleResponse()
-    {
-        // Vary responses to make it feel realistic
         var titles = new[]
         {
-            "Studievägledning och Karriärval",
-            "Gymnasieval och Utbildning",
-            "Hjälp med Skolval",
-            "Studie- och Yrkesvägledning",
-            "Vägledning för Gymnasievalet"
+            "Studievägledning",
+            "Karriärfrågor",
+            "Utbildningsval",
+            "Gymnasievägledning",
+            "Framtidsplanering"
         };
-        
+    
         return titles[_random.Next(titles.Length)];
     }
 
-    private string GenerateSchoolAdviceResponse(string prompt)
+    private string GenerateRandomResponse()
     {
-        // Extract age if present (for more realistic response)
-        var ageMatch = System.Text.RegularExpressions.Regex.Match(prompt, @"(\d+)-årig");
-        var age = ageMatch.Success ? ageMatch.Groups[1].Value : "ung";
-        
         var responses = new[]
         {
-            $"Det är fantastiskt att du är intresserad av att söka till gymnasiet! " +
-            $"De skolor jag har visat dig erbjuder alla utmärkta program som passar dina intressen. " +
-            $"Jag rekommenderar starkt att du besöker deras webbplatser för att lära dig mer om varje skola. " +
-            $"Öppet hus-dagar är också ett perfekt tillfälle att få känslan för skolmiljön och träffa lärare. " +
-            $"Tveka inte att ställa fler frågor om du behöver mer hjälp!",
-            
-            $"Vilken spännande tid i ditt liv! Att välja gymnasieskola är ett viktigt steg. " +
-            $"Skolorna jag har hittat åt dig har alla starka program inom ditt intresseområde. " +
-            $"Ta dig tid att utforska deras webbsidor och läs om de olika programmen. " +
-            $"Jag föreslår också att du går på öppet hus så du kan se skolorna med egna ögon. " +
-            $"Kommer du på fler frågor? Jag hjälper gärna till!",
-            
-            $"Jag ser att du funderar på gymnasievalet - det är jättebra att du planerar framåt! " +
-            $"De skolor som visas erbjuder program som verkar passa dig väl. " +
-            $"Besök gärna deras hemsidor för mer detaljerad information om utbildningarna. " +
-            $"Många skolor har öppet hus där du kan ställa frågor direkt till lärare och elever. " +
-            $"Hör av dig om du vill veta mer om något!"
+            "Det låter spännande! Berätta gärna mer om dina intressen så kan jag hjälpa dig hitta rätt utbildning.",
+            "Intressant val! Vilka ämnen tycker du är roligast i skolan idag?",
+            "Bra att du tänker på din framtid! Finns det någon specifik stad du är intresserad av att studera i?",
+            "Coolt! Vad är det som gör att du är intresserad av just det här området?",
+            "Jag hjälper dig gärna! Har du funderat på om du vill gå teoretiska eller praktiska program?",
+            "Spännande! Känner du till vilka gymnasieprogram som finns inom det området?"
         };
-        
+    
         return responses[_random.Next(responses.Length)];
-    }
-
-    private string GenerateNoResultsResponse(string prompt)
-    {
-        // Check if municipality or program was mentioned
-        var hasMunicipality = prompt.Contains("Kommun:");
-        var hasProgram = prompt.Contains("Program:");
-        
-        var sb = new StringBuilder();
-        
-        sb.AppendLine("Tyvärr hittade jag inga skolor som exakt matchar dina kriterier just nu.");
-        sb.AppendLine();
-        
-        if (hasMunicipality)
-        {
-            sb.AppendLine("Några förslag:");
-            sb.AppendLine("• Prova att söka i närliggande kommuner - ibland finns utmärkta skolor bara en kommun bort");
-        }
-        
-        if (hasProgram)
-        {
-            sb.AppendLine("• Överväg relaterade program som kan ge liknande kompetenser");
-        }
-        
-        sb.AppendLine("• Specificera dina intressen mer - ju mer jag vet, desto bättre kan jag hjälpa dig hitta rätt skola!");
-        sb.AppendLine();
-        sb.AppendLine("Berätta gärna mer om vad du är intresserad av, så kan vi söka tillsammans!");
-        
-        return sb.ToString().Trim();
-    }
-
-    private string GenerateRegularCounselingResponse(string prompt)
-    {
-        // Extract if it's about school/education
-        var lower = prompt.ToLowerInvariant();
-        var isSchoolRelated = new[] { "skola", "studera", "utbildning", "gymnasium", "plugga" }
-            .Any(keyword => lower.Contains(keyword));
-        
-        if (isSchoolRelated)
-        {
-            return "Det låter som en viktig fråga om din framtid! " +
-                   "Jag hjälper gärna till med studievägledning. " +
-                   "Kan du berätta lite mer om vad du funderar på? " +
-                   "Till exempel vilket ämnesområde du är intresserad av, eller vilken stad du helst vill studera i?";
-        }
-        
-        // Generic counseling response
-        var responses = new[]
-        {
-            "Tack för att du delar dina tankar med mig! " +
-            "Jag är här för att hjälpa dig navigera dina val. " +
-            "Kan du berätta lite mer så vi kan utforska dina alternativ tillsammans?",
-            
-            "Det är bra att du funderar på din framtid! " +
-            "Låt oss prata om vad som intresserar dig mest. " +
-            "Finns det något särskilt område eller ämne som du tycker verkar spännande?",
-            
-            "Jag uppskattar att du kom till mig med detta! " +
-            "Studie- och karriärval kan kännas överväldigande, men vi tar det steg för steg. " +
-            "Vad är det som får dig att fundera just nu?"
-        };
-        
-        return responses[_random.Next(responses.Length)];
-    }
-
-    private enum PromptType
-    {
-        Title,
-        SchoolAdvice,
-        NoResults,
-        RegularCounseling
     }
 }
