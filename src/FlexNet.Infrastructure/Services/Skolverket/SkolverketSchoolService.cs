@@ -80,7 +80,7 @@ public class SkolverketSchoolService : ISchoolService
             
             school = await FetchSchoolDetailAsync(schoolUnitCode, cancellationToken);
 
-            if (school == null)
+            if (school != null) return Result<School>.Success(school);
             {
                 var error = new ErrorInfo(
                     ErrorCode: "SCHOOL_NOT_FOUND",
@@ -89,7 +89,6 @@ public class SkolverketSchoolService : ISchoolService
                     Message: $"School with code {schoolUnitCode} not found.");
                 return Result<School>.Failure(error);
             }
-            return Result<School>.Success(school);
         }
         catch (Exception ex)
         {
@@ -141,7 +140,7 @@ public class SkolverketSchoolService : ISchoolService
         var listResponse = await _apiClient.GetAllGymnasiumSchoolAsync(cancellationToken);
         if (listResponse?.Data?.Attributes == null || listResponse.Data.Attributes.Count == 0)
         {
-            _logger.LogWarning("Empty or null respones from list endpoint");
+            _logger.LogWarning("Empty or null responses from list endpoint");
             return new List<School>();
         }
 
@@ -162,7 +161,7 @@ public class SkolverketSchoolService : ISchoolService
             .Cast<School>()
             .ToList();
         var schoolsWithNullPrograms = validSchools.Where(s => s.Programs == null).ToList();
-        if (schoolsWithNullPrograms.Any())
+        if (schoolsWithNullPrograms.Count != 0)
         {
             _logger.LogWarning("Found {Count} schools with null Programs!", schoolsWithNullPrograms.Count);
             foreach (var school in schoolsWithNullPrograms.Take(5))

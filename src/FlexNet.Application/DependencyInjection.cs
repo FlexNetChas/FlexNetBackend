@@ -8,7 +8,6 @@ using FlexNet.Application.Configuration;
 using FlexNet.Application.Security;
 using FlexNet.Application.Services.AiGenerators;
 using FlexNet.Application.Services.Factories;
-using FlexNet.Application.Services.Security;
 
 namespace FlexNet.Application
 {

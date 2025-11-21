@@ -64,14 +64,14 @@ public static class DependencyInjection
     {
         services.AddHttpClient<ISkolverketApiClient, SkolverketApiClient>(client =>
         {
-            client.BaseAddress = new Uri("https://api.skolverket.se/skolenhetsregistret/");
+            client.BaseAddress = new Uri("https://api.skolverket.se/");
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.Timeout = TimeSpan.FromSeconds(30);
         });
     
         services.AddSingleton<SkolverketMapper>();
         services.AddScoped<ISchoolService, SkolverketSchoolService>();
-    
+        services.AddScoped<IProgramService, SkolverketProgramService>();
     }
     private static void ConfigureKeyVault(IServiceCollection services, IConfiguration configuration)
     {

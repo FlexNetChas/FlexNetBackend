@@ -107,7 +107,7 @@ public class GuidanceRouterTest
                     new(
                         Code: "TE",
                         Name: "Teknikprogrammet",
-                        Orientation: null
+                        StudyPaths: new List<StudyPath>()
                     )
                 }
             )
