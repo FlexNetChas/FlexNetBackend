@@ -4,5 +4,5 @@ namespace FlexNet.Application.Interfaces.IServices;
 
 public interface ISchoolSearchDetector
 {
-    SchoolRequestInfo? DetectSchoolRequest(string userMsg, IEnumerable<ConversationMessage>? recentHistory = null);
+    Task<SchoolRequestInfo?> DetectSchoolRequest(string userMsg, IEnumerable<ConversationMessage>? recentHistory = null);
 }

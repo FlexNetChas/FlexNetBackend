@@ -42,7 +42,7 @@ public class GuidanceRouter : IGuidanceRouter
             var rawMsg = ExtractRawMessage(xmlPrompt);
 
             // 2. Detect if school related query
-            var schoolRequest = _detector.DetectSchoolRequest(rawMsg, conversationHistory);
+            var schoolRequest = await _detector.DetectSchoolRequest(rawMsg, conversationHistory);
 
             if (schoolRequest == null)
                 return await _aiClient.CallAsync(xmlPrompt);
@@ -89,7 +89,7 @@ public class GuidanceRouter : IGuidanceRouter
         
         var rawMsg = ExtractRawMessage(xmlPrompt);
 
-        var schoolRequest = _detector.DetectSchoolRequest(rawMsg, conversationHistory);
+        var schoolRequest = await _detector.DetectSchoolRequest(rawMsg, conversationHistory);
 
         if (schoolRequest == null)
         {

@@ -65,7 +65,7 @@ public class GuidanceRouterTest
         // Mock: Detector returns null (no school search)
         _detectorMock
             .Setup(d => d.DetectSchoolRequest(It.IsAny<string>(), conversationHistory))
-            .Returns((SchoolRequestInfo?)null);
+            .ReturnsAsync((SchoolRequestInfo?)null);
 
         // Mock: AI client returns response
         _aiClientMock
@@ -132,7 +132,7 @@ public class GuidanceRouterTest
         // Mock: Detector detects school search
         _detectorMock
             .Setup(d => d.DetectSchoolRequest(It.IsAny<string>(), conversationHistory))
-            .Returns(schoolRequest);
+            .ReturnsAsync(schoolRequest);
 
         // Mock: School service returns schools
         _schoolServiceMock
@@ -192,7 +192,7 @@ public class GuidanceRouterTest
         // Mock: Detector detects school search
         _detectorMock
             .Setup(d => d.DetectSchoolRequest(It.IsAny<string>(), conversationHistory))
-            .Returns(schoolRequest);
+            .ReturnsAsync(schoolRequest);
 
         // Mock: School service returns empty list
         _schoolServiceMock
@@ -239,7 +239,7 @@ public class GuidanceRouterTest
         // Mock: Detector returns null
         _detectorMock
             .Setup(d => d.DetectSchoolRequest(It.IsAny<string>(), conversationHistory))
-            .Returns((SchoolRequestInfo?)null);
+            .ReturnsAsync((SchoolRequestInfo?)null);
 
         // Mock: AI client streams chunks
         _aiClientMock
@@ -304,7 +304,7 @@ public class GuidanceRouterTest
         // Mock: Detector detects school search
         _detectorMock
             .Setup(d => d.DetectSchoolRequest(It.IsAny<string>(), conversationHistory))
-            .Returns(schoolRequest);
+            .ReturnsAsync(schoolRequest);
 
         // Mock: School service returns schools
         _schoolServiceMock
@@ -364,7 +364,7 @@ public class GuidanceRouterTest
         // Mock: Detector detects search
         _detectorMock
             .Setup(d => d.DetectSchoolRequest(It.IsAny<string>(), conversationHistory))
-            .Returns(schoolRequest);
+            .ReturnsAsync(schoolRequest);
 
         // Mock: No schools found
         _schoolServiceMock
@@ -431,7 +431,7 @@ public class GuidanceRouterTest
 
         _detectorMock
             .Setup(x => x.DetectSchoolRequest(It.IsAny<string>(), It.IsAny<IEnumerable<ConversationMessage>>()))
-            .Returns((SchoolRequestInfo?)null);
+            .ReturnsAsync((SchoolRequestInfo?)null);
 
         string? capturedPrompt = null;
         _aiClientMock
@@ -484,7 +484,7 @@ public class GuidanceRouterTest
 
         _detectorMock
             .Setup(x => x.DetectSchoolRequest(It.IsAny<string>(), It.IsAny<IEnumerable<ConversationMessage>>()))
-            .Returns((SchoolRequestInfo?)null);
+            .ReturnsAsync((SchoolRequestInfo?)null);
 
         _aiClientMock
             .Setup(x => x.CallAsync(It.IsAny<string>()))
@@ -532,7 +532,7 @@ public class GuidanceRouterTest
 
         _detectorMock
             .Setup(x => x.DetectSchoolRequest(It.IsAny<string>(), It.IsAny<IEnumerable<ConversationMessage>>()))
-            .Returns((SchoolRequestInfo?)null);
+            .ReturnsAsync((SchoolRequestInfo?)null);
 
         _aiClientMock
             .Setup(x => x.CallAsync(It.IsAny<string>()))
