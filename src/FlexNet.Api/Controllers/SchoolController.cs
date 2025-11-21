@@ -35,7 +35,7 @@ public class SchoolController : ControllerBase
             var criteria = new SchoolSearchCriteria(
                 Municipality: request.Municipality,
                 ProgramCodes: request.ProgramCodes?.AsReadOnly(),
-              
+                SearchText: request.SearchText, 
                 MaxResult: request.MaxResults
             );
             

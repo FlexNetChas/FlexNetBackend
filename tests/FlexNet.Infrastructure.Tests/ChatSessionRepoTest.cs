@@ -58,7 +58,7 @@ namespace FlexNet.Infrastructure.Tests
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _service.GetByIdAsync((int)session.Id);
+            var result = await _service.GetByIdAsync((int)session.Id!);
 
             // Assert
             result.Should().NotBeNull();
@@ -112,7 +112,7 @@ namespace FlexNet.Infrastructure.Tests
             await _context.SaveChangesAsync();
 
             var updateRequest = new UpdateChatSessionsRequestDto(
-                (int)session.Id,
+                (int)session.Id!,
                 "Updated Session",
                 DateTime.UtcNow.AddHours(-1),
                 DateTime.UtcNow,
@@ -152,7 +152,7 @@ namespace FlexNet.Infrastructure.Tests
             bool result = false;
             if (entity != null)
 
-            _context.ChatSessions.Remove(entity);
+                _context.ChatSessions.Remove(entity);
             await _context.SaveChangesAsync();
             result = true;
 

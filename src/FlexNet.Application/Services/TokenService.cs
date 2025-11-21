@@ -21,7 +21,6 @@ public class TokenService : ITokenService
         _rtRepo = rtRepo;
         _jwtGenerator = jwtGenerator;
         _logger = logger;
-        _logger.LogInformation("TokenService initialized");
 
     }
     public async Task<TokenPairResponseDto> GenerateTokensAsync(User user)
@@ -35,37 +34,22 @@ public class TokenService : ITokenService
             Token = refreshTokenString,
             UserId = user.Id,
             CreatedAt = DateTime.UtcNow,
-            // ExpiresAt = DateTime.UtcNow.AddDays(7),
-            ExpiresAt = DateTime.UtcNow.AddMinutes(2),
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
             IsUsed = false,
             IsRevoked = false
         };
         
         await _rtRepo.AddAsync(refreshToken);
-        _logger.LogInformation(
-            "Generated new token pair for user {UserId}. Token expires at {ExpiresAt}",
-            user.Id,
-            refreshToken.ExpiresAt
-        );
         return new TokenPairResponseDto(accessToken, refreshTokenString);
     }
 
     public async Task<RefreshResponseDto> RefreshTokenAsync(string refreshToken)
     {
-        _logger.LogInformation("RefreshTokenAsync called");
 
         var storedToken = await _rtRepo.GetByTokenAsync(refreshToken);
 
         if (storedToken is null )
             throw new UnauthorizedAccessException("Invalid refresh token");
-        
-        _logger.LogInformation(
-            "Token found for user {UserId}. IsUsed: {IsUsed}, IsRevoked: {IsRevoked}, ExpiresAt: {ExpiresAt}",
-            storedToken.UserId,
-            storedToken.IsUsed,
-            storedToken.IsRevoked,
-            storedToken.ExpiresAt
-        );
         
         if (storedToken.IsUsed)
         {
@@ -82,23 +66,13 @@ public class TokenService : ITokenService
             var reason = storedToken.ExpiresAt <= DateTime.UtcNow ? "expired" : 
                 storedToken.IsRevoked ? "revoked" : "invalid";
             
-            _logger.LogInformation(
-                "Refresh attempt with {Reason} token for user {UserId}",
-                reason,
-                storedToken.UserId
-            );
-            
             throw new UnauthorizedAccessException($"Token {reason}");
         }
-        _logger.LogInformation("Marking token as used for user {UserId}", storedToken.UserId);
  
         storedToken.IsUsed = true;
         storedToken.UsedAt = DateTime.UtcNow;
         await _rtRepo.UpdateAsync(storedToken);
-        _logger.LogInformation(
-            "Successfully refreshed token for user {UserId}. Generating new token pair...",
-            storedToken.UserId
-        );
+
         var tokens = await GenerateTokensAsync(storedToken.User!);
 
         return new RefreshResponseDto(

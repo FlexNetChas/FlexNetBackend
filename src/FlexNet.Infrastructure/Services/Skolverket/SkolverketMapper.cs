@@ -9,6 +9,12 @@ namespace FlexNet.Infrastructure.Services.Skolverket;
 public class SkolverketMapper
 {
     private readonly ILogger<SkolverketMapper> _logger;
+
+    public SkolverketMapper(ILogger<SkolverketMapper> logger)
+    {
+        _logger = logger;
+    }
+
     private static readonly Dictionary<string, string> ProgramNames = new()
     {
         ["BA"] = "Barn- och fritidsprogrammet",
@@ -78,7 +84,7 @@ public class SkolverketMapper
             SchoolUnitCode: data.SchoolUnitCode,
             Name: attributes.DisplayName,
             Municipality: municipalityName,
-            MunicipalityCode: attributes.MunicipalityCode ?? "Unknown",
+            MunicipalityCode: attributes.MunicipalityCode,
             WebsiteUrl: attributes.Url,
             Email: attributes.Email,
             Phone:  attributes.PhoneNumber,
@@ -95,10 +101,9 @@ public class SkolverketMapper
         }
         var programs = properties.Gy.Programmes
             .Where(code => !string.IsNullOrWhiteSpace(code))
-            .Select(code => CreateProgram(code))
+            .Select(CreateProgram)
             .ToList();
         return programs;
-        ;
     }
 
     private SchoolProgram CreateProgram(string code)
@@ -107,7 +112,7 @@ public class SkolverketMapper
         return new SchoolProgram(
             Code: code,
             Name: name,
-            Orientation: null);
+            StudyPaths: new List<StudyPath>());
     }
 
     private string GetProgramName(string code)
@@ -117,19 +122,13 @@ public class SkolverketMapper
 
         if (code.Length > 2)
         {
-            var normalized = code.Substring(0, 2);
+            var normalized = code[..2];
             if(ProgramNames.TryGetValue(normalized, out var normalizedName))
                 return normalizedName;
         }
         _logger.LogWarning("Unknown program code: {Code}", code);
         return $"Program {code}";
     }
-
-    public SkolverketMapper(ILogger<SkolverketMapper> logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
 
     private Coordinates? ParseCoordinates(SkolverketGeoCoordinates? geoCoordinates)
     {
@@ -140,22 +139,17 @@ public class SkolverketMapper
             string.IsNullOrWhiteSpace(geoCoordinates.Longitude))
             return null;
     
-        var latSuccess = double.TryParse(geoCoordinates.Latitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude);
-        var lonSuccess = double.TryParse(geoCoordinates.Longitude,NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude);
-    
-        if (!latSuccess || !lonSuccess)
-        {
-           
-            _logger.LogWarning(
-                "Failed to parse coordinates: lat={Latitude}, lon={Longitude}",
-                geoCoordinates.Latitude, 
-                geoCoordinates.Longitude);
+        var latSuccess = TryParse(geoCoordinates.Latitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude);
+        var lonSuccess = TryParse(geoCoordinates.Longitude,NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude);
+
+        if (latSuccess && lonSuccess) return new Coordinates(latitude, longitude);
+        _logger.LogWarning(
+            "Failed to parse coordinates: lat={Latitude}, lon={Longitude}",
+            geoCoordinates.Latitude, 
+            geoCoordinates.Longitude);
         
-            return null;
-        }
-    
-        return new Coordinates(latitude, longitude);  
-        
+        return null;
+
     }
 
     private Address? ExtractVisitingAddress(List<SkolverketAddress>? addresses)
@@ -165,17 +159,15 @@ public class SkolverketMapper
                       addresses.FirstOrDefault(a => a.Type == "POSTADRESS");
         if (address == null) return null;
 
-        if (string.IsNullOrWhiteSpace(address.StreetAddress) ||
-            string.IsNullOrWhiteSpace(address.PostalCode) ||
-            string.IsNullOrWhiteSpace(address.Locality))
-        {
-            _logger.LogWarning("Address missing required fields for school");
-            return null;
-        }
-        return new Address(address.StreetAddress, address.PostalCode, address.Locality);
+        if (!string.IsNullOrWhiteSpace(address.StreetAddress) &&
+            !string.IsNullOrWhiteSpace(address.PostalCode) &&
+            !string.IsNullOrWhiteSpace(address.Locality))
+            return new Address(address.StreetAddress, address.PostalCode, address.Locality);
+        _logger.LogWarning("Address missing required fields for school");
+        return null;
     }
 
-    private string? GetMunicipalityName(List<SkolverketAddress>? addresses, string municipalityCode)
+    private static string? GetMunicipalityName(List<SkolverketAddress>? addresses, string municipalityCode)
     {
         if(addresses == null || addresses.Count == 0) return municipalityCode ;
 

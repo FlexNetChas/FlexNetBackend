@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace FlexNet.Application.Services.Security;
+namespace FlexNet.Application.Services;
 
 public interface IOutputValidator
 {

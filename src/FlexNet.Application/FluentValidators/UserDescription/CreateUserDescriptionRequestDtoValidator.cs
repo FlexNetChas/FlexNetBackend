@@ -8,7 +8,7 @@ namespace FlexNet.Application.FluentValidators.UserDescription
         public CreateUserDescriptionRequestDtoValidator()
         {
             RuleFor(x => x.Age)
-                .Must(age => age == null || (age >= 0 && age <= 100))
+                .Must(age => age is >= 0 and <= 100)
                 .WithMessage("Age must be between 0 and 100 if provided.");
 
             RuleFor(x => x.Gender)

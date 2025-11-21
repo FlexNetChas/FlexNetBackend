@@ -9,9 +9,9 @@ public class SkolverketApiClient : ISkolverketApiClient
 {
     private readonly HttpClient _client;
     private readonly ILogger<SkolverketApiClient> _logger;
-    // If needed, remove the school_type=GY to filter all schools instead of only Gymnasium. 
-    private const string ListEndpoint = "v2/school-units?school_type=GY&status=AKTIV";
-    private const string DetailEndpointTemplate = "v2/school-units/{0}";
+    private const string ListEndpoint = "skolenhetsregistret/v2/school-units?school_type=GY&status=AKTIV";
+    private const string DetailEndpointTemplate = "skolenhetsregistret/v2/school-units/{0}";
+    private const string ProgramsEndpoint = "planned-educations/v4/support/programs";
 
     public SkolverketApiClient(HttpClient client, ILogger<SkolverketApiClient> logger)
     {
@@ -23,14 +23,7 @@ public class SkolverketApiClient : ISkolverketApiClient
     {
         try
         {
-            _logger.LogInformation("Fetching list of all gymnasium schools from Skolverket API");
             var response = await _client.GetFromJsonAsync<SkolverketListResponse>(ListEndpoint, cancellationToken);
-            if (response?.Data?.Attributes != null)
-            {
-                _logger.LogInformation("Successfully fetched {Count} schools from list endpoint",
-                    response.Data?.Attributes.Count);
-            }
-
             return response;
         }
         catch (HttpRequestException ex)
@@ -80,4 +73,23 @@ public class SkolverketApiClient : ISkolverketApiClient
         }
     }
 
+    public async Task<SkolverketProgramsResponse?> GetProgramsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _client.GetFromJsonAsync<SkolverketProgramsResponse>(ProgramsEndpoint, cancellationToken);
+            return response;
+
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error fetching programs from Skolverket API");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error fetching programs");
+            return null;
+        }
+    }
 }
