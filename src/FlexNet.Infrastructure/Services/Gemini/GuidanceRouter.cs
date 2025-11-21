@@ -17,14 +17,18 @@ public class GuidanceRouter : IGuidanceRouter
     private readonly ISchoolSearchDetector _detector;
     private readonly IPromptEnricher _enricher;
     private readonly IAiClient _aiClient;
+    private readonly ProgramCatalogBuilder _catalogBuilder;
 
-    public GuidanceRouter(ISchoolService schoolService, ILogger<GuidanceRouter> logger, ISchoolSearchDetector detector, IPromptEnricher enricher, IAiClient aiClient)
+    private string? _cachedProgramCatalog;
+
+    public GuidanceRouter(ISchoolService schoolService, ILogger<GuidanceRouter> logger, ISchoolSearchDetector detector, IPromptEnricher enricher, IAiClient aiClient, ProgramCatalogBuilder catalogBuilder)
     {
         _schoolService = schoolService ?? throw new ArgumentNullException(nameof(schoolService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _detector = detector ?? throw new ArgumentNullException(nameof(detector));
         _enricher = enricher ?? throw new ArgumentNullException(nameof(enricher));
         _aiClient = aiClient ?? throw new ArgumentNullException(nameof(aiClient));
+        _catalogBuilder = catalogBuilder ?? throw new ArgumentNullException(nameof(catalogBuilder));
     }
 
     public async Task<Result<string>> RouteAndExecuteAsync(string xmlPrompt,
@@ -32,6 +36,8 @@ public class GuidanceRouter : IGuidanceRouter
     {
         try
         {
+            xmlPrompt = await EnrichPromptWithCatalogAsync(xmlPrompt);
+
             // 1. Extract raw message 
             var rawMsg = ExtractRawMessage(xmlPrompt);
 
@@ -58,14 +64,11 @@ public class GuidanceRouter : IGuidanceRouter
             }
             var noResultsPrompt = _enricher.EnrichWithNoResults(xmlPrompt, schoolRequest);
             var noResultsResponse = await _aiClient.CallAsync(noResultsPrompt);
-        
-            if (!noResultsResponse.IsSuccess)
-            {
-                _logger.LogWarning("Failed to generate no-results response: {Error}", noResultsResponse.Error?.Message);
-                return Result<string>.Success(GetNoResultsFallback());
-            }
-        
-            return noResultsResponse; 
+
+            if (noResultsResponse.IsSuccess) return noResultsResponse;
+            _logger.LogWarning("Failed to generate no-results response: {Error}", noResultsResponse.Error?.Message);
+            return Result<string>.Success(GetNoResultsFallback());
+
         }
         catch (Exception ex)
         {
@@ -82,6 +85,8 @@ public class GuidanceRouter : IGuidanceRouter
         IEnumerable<ConversationMessage> conversationHistory,
         UserContextDto userContextDto)
     {
+        xmlPrompt = await EnrichPromptWithCatalogAsync(xmlPrompt);
+        
         var rawMsg = ExtractRawMessage(xmlPrompt);
 
         var schoolRequest = _detector.DetectSchoolRequest(rawMsg, conversationHistory);
@@ -118,12 +123,11 @@ public class GuidanceRouter : IGuidanceRouter
                     yield break;
                 }
             }
-            if (hadSuccessfulChunk)
-            {
-                var schoolList = SchoolResponseFormatter.FormatSchoolListOnly(schools);
-                yield return Result<string>.Success(schoolList);
-            }
-        
+
+            if (!hadSuccessfulChunk) yield break;
+            var schoolList = SchoolResponseFormatter.FormatSchoolListOnly(schools);
+            yield return Result<string>.Success(schoolList);
+
             yield break; 
         }
         
@@ -176,5 +180,43 @@ public class GuidanceRouter : IGuidanceRouter
         return "Tyvärr hittade jag inga skolor som matchar dina kriterier just nu. " +
                "Kan du prova att söka i en närliggande kommun eller överväga relaterade program? " +
                "Jag hjälper gärna till att hitta alternativ!";
+    }
+    private async Task<string?> GetProgramCatalogAsync()
+    {
+        // Return cached catalog if available
+        if (_cachedProgramCatalog != null)
+            return _cachedProgramCatalog;
+
+        // Load and cache
+        var result = await _catalogBuilder.BuildCatalogXmlAsync();
+    
+        if (result.IsSuccess && !string.IsNullOrEmpty(result.Data))
+        {
+            _cachedProgramCatalog = result.Data;
+            _logger.LogInformation("Program catalog loaded and cached");
+            return _cachedProgramCatalog;
+        }
+
+        _logger.LogWarning("Failed to load program catalog: {Error}", result.Error?.Message);
+        return null;
+    }
+    private async Task<string> EnrichPromptWithCatalogAsync(string xmlPrompt)
+    {
+        var catalog = await GetProgramCatalogAsync();
+    
+        if (catalog == null)
+            return xmlPrompt;  // Graceful degradation - continue without catalog
+
+        // Insert catalog before the current message
+        var catalogSection = $"\n{catalog}\n";
+    
+        // If there's a <current_message> tag, insert before it
+        if (xmlPrompt.Contains("<current_message>"))
+        {
+            return xmlPrompt.Replace("<current_message>", $"{catalogSection}<current_message>");
+        }
+    
+        // Otherwise, prepend to the entire prompt
+        return catalogSection + xmlPrompt;
     }
 }

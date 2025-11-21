@@ -2,6 +2,7 @@ using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
+using FlexNet.Application.Services.Formatters;
 using FlexNet.Domain.Entities.Schools;
 using FlexNet.Infrastructure.Services.Gemini;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,8 @@ public class GuidanceRouterTest
     private readonly Mock<ISchoolSearchDetector> _detectorMock;
     private readonly Mock<IPromptEnricher> _enricherMock;
     private readonly Mock<IAiClient> _aiClientMock;
+    private readonly Mock<ProgramCatalogBuilder> _catalogMock;
+
     private readonly GuidanceRouter _router;
     private readonly ITestOutputHelper _output;
 
@@ -28,12 +31,22 @@ public class GuidanceRouterTest
         _enricherMock = new Mock<IPromptEnricher>();
         _aiClientMock = new Mock<IAiClient>();
         
+        var mockProgramService = new Mock<IProgramService>();
+        var mockCatalogLogger = new Mock<ILogger<ProgramCatalogBuilder>>();
+        _catalogMock = new Mock<ProgramCatalogBuilder>(
+            mockProgramService.Object, 
+            mockCatalogLogger.Object);
+        
+        _catalogMock
+            .Setup(x => x.BuildCatalogXmlAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<string>.Success("")); 
         _router = new GuidanceRouter(
             _schoolServiceMock.Object,
             _loggerMock.Object,
             _detectorMock.Object,
             _enricherMock.Object,
-            _aiClientMock.Object
+            _aiClientMock.Object,
+            _catalogMock.Object
         );
 
         _output = output;
@@ -336,6 +349,7 @@ public class GuidanceRouterTest
         // Arrange
         const string xmlPrompt = "<current_message>Rymdteknik i Pajala</current_message>";
         var conversationHistory = new List<ConversationMessage>();
+        if (conversationHistory == null) throw new ArgumentNullException(nameof(conversationHistory));
         var context = new UserContextDto(18, null, "Årskurs 9", "Space tech");
         
         var schoolRequest = new SchoolRequestInfo
@@ -386,9 +400,157 @@ public class GuidanceRouterTest
         // Verify school enrichment NOT used
         _enricherMock.Verify(e => e.EnrichWithSchools(It.IsAny<string>(), It.IsAny<List<School>>()), Times.Never);
     }
+    [Fact]
+    public async Task RouteAndExecuteAsync_IncludesProgramCatalog_InPrompt()
+    {
+        // Arrange
+        const string catalogXml = "<available_programs><program code=\"TE25\" name=\"Teknikprogrammet\"/></available_programs>";
+    
+        // Create a fresh mock with proper setup
+        var mockProgramService = new Mock<IProgramService>();
+        var mockCatalogLogger = new Mock<ILogger<ProgramCatalogBuilder>>();
+        var mockCatalogBuilder = new Mock<ProgramCatalogBuilder>(
+            mockProgramService.Object, 
+            mockCatalogLogger.Object)
+        {
+            CallBase = false  // Don't call the real implementation
+        };
+    
+        mockCatalogBuilder
+            .Setup(x => x.BuildCatalogXmlAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<string>.Success(catalogXml));
 
+        // Create fresh router with the catalog-enabled mock
+        var router = new GuidanceRouter(
+            _schoolServiceMock.Object,
+            _loggerMock.Object,
+            _detectorMock.Object,
+            _enricherMock.Object,
+            _aiClientMock.Object,
+            mockCatalogBuilder.Object);
 
+        _detectorMock
+            .Setup(x => x.DetectSchoolRequest(It.IsAny<string>(), It.IsAny<IEnumerable<ConversationMessage>>()))
+            .Returns((SchoolRequestInfo?)null);
 
+        string? capturedPrompt = null;
+        _aiClientMock
+            .Setup(x => x.CallAsync(It.IsAny<string>()))
+            .Callback<string>(prompt => capturedPrompt = prompt)
+            .ReturnsAsync(Result<string>.Success("AI response"));
+
+        const string xmlPrompt = "Test prompt";  // Simple prompt without XML tags
+        var conversationHistory = Array.Empty<ConversationMessage>();
+        var userContext = new UserContextDto(Age: 16, Gender: "M", Education: "Högstadiet", Purpose: "Test");
+
+        // Act
+        await router.RouteAndExecuteAsync(xmlPrompt, conversationHistory, userContext);
+
+        // Assert
+        Assert.NotNull(capturedPrompt);
+        Assert.Contains(catalogXml, capturedPrompt);
+        Assert.Contains("Test prompt", capturedPrompt);
+    }
+    [Fact]
+    public async Task RouteAndExecuteAsync_WhenCatalogFails_ContinuesWithoutCatalog()
+    {
+        // Arrange
+        var error = new ErrorInfo(
+            ErrorCode: "CATALOG_ERROR",
+            CanRetry: true,
+            RetryAfter: 60,
+            Message: "Failed to build catalog");
+
+        var mockProgramService = new Mock<IProgramService>();
+        var mockCatalogLogger = new Mock<ILogger<ProgramCatalogBuilder>>();
+        var mockCatalogBuilder = new Mock<ProgramCatalogBuilder>(
+            mockProgramService.Object, 
+            mockCatalogLogger.Object)
+        {
+            CallBase = false
+        };
+    
+        mockCatalogBuilder
+            .Setup(x => x.BuildCatalogXmlAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<string>.Failure(error));
+
+        var router = new GuidanceRouter(
+            _schoolServiceMock.Object,
+            _loggerMock.Object,
+            _detectorMock.Object,
+            _enricherMock.Object,
+            _aiClientMock.Object,
+            mockCatalogBuilder.Object);
+
+        _detectorMock
+            .Setup(x => x.DetectSchoolRequest(It.IsAny<string>(), It.IsAny<IEnumerable<ConversationMessage>>()))
+            .Returns((SchoolRequestInfo?)null);
+
+        _aiClientMock
+            .Setup(x => x.CallAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<string>.Success("AI response"));
+
+        const string xmlPrompt = "Test prompt";
+        var conversationHistory = Array.Empty<ConversationMessage>();
+        var userContext = new UserContextDto(Age: 16, Gender: "M", Education: "Högstadiet", Purpose: "Test");
+
+        // Act
+        var result = await router.RouteAndExecuteAsync(xmlPrompt, conversationHistory, userContext);
+
+        // Assert - Should succeed even though catalog failed
+        Assert.True(result.IsSuccess);
+        Assert.Equal("AI response", result.Data);
+    
+        _aiClientMock.Verify(x => x.CallAsync(It.IsAny<string>()), Times.Once);
+    }
+    [Fact]
+    public async Task RouteAndExecuteAsync_CachesCatalog_OnlyLoadsOnce()
+    {
+        // Arrange
+        const string catalogXml = "<available_programs><program code=\"TE25\" name=\"Teknikprogrammet\"/></available_programs>";
+    
+        var mockProgramService = new Mock<IProgramService>();
+        var mockCatalogLogger = new Mock<ILogger<ProgramCatalogBuilder>>();
+        var mockCatalogBuilder = new Mock<ProgramCatalogBuilder>(
+            mockProgramService.Object, 
+            mockCatalogLogger.Object)
+        {
+            CallBase = false
+        };
+    
+        mockCatalogBuilder
+            .Setup(x => x.BuildCatalogXmlAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<string>.Success(catalogXml));
+
+        var router = new GuidanceRouter(
+            _schoolServiceMock.Object,
+            _loggerMock.Object,
+            _detectorMock.Object,
+            _enricherMock.Object,
+            _aiClientMock.Object,
+            mockCatalogBuilder.Object);
+
+        _detectorMock
+            .Setup(x => x.DetectSchoolRequest(It.IsAny<string>(), It.IsAny<IEnumerable<ConversationMessage>>()))
+            .Returns((SchoolRequestInfo?)null);
+
+        _aiClientMock
+            .Setup(x => x.CallAsync(It.IsAny<string>()))
+            .ReturnsAsync(Result<string>.Success("AI response"));
+
+        const string xmlPrompt = "Test prompt";
+        var conversationHistory = Array.Empty<ConversationMessage>();
+        var userContext = new UserContextDto(Age: 16, Gender: "M", Education: "Högstadiet", Purpose: "Test");
+
+        // Act - Call twice
+        await router.RouteAndExecuteAsync(xmlPrompt, conversationHistory, userContext);
+        await router.RouteAndExecuteAsync(xmlPrompt, conversationHistory, userContext);
+
+        // Assert - Catalog should only be built once (cached)
+        mockCatalogBuilder.Verify(
+            x => x.BuildCatalogXmlAsync(It.IsAny<CancellationToken>()), 
+            Times.Once);
+    }
     /// <summary>
     /// Creates an async enumerable from an array of strings for mocking streaming responses.
     /// </summary>

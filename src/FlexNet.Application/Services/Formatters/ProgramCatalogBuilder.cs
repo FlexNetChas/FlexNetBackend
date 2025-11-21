@@ -25,7 +25,7 @@ public class ProgramCatalogBuilder
     /// <summary>
     /// Builds XML catalog of all available gymnasium programs.
     /// </summary>
-    public async Task<Result<string>> BuildCatalogXmlAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<Result<string>> BuildCatalogXmlAsync(CancellationToken cancellationToken = default)
     {
         try
         {
