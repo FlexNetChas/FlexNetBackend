@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using FlexNet.Application.Interfaces;
@@ -65,7 +66,12 @@ public static class DependencyInjection
         services.AddHttpClient<ISkolverketApiClient, SkolverketApiClient>(client =>
         {
             client.BaseAddress = new Uri("https://api.skolverket.se/");
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/vnd.skolverket.plannededucations.api.v4.hal+json")
+            );
+
+
             client.Timeout = TimeSpan.FromSeconds(30);
         });
     
