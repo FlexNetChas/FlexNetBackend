@@ -34,8 +34,9 @@ internal sealed class KeyVaultApiKeyProvider : IApiKeyProvider
         if (string.IsNullOrWhiteSpace(_secretName))
             throw new InvalidOperationException("Configured secret name is null or empty.");
 
-        if (_cache.TryGetValue(_secretName, out string cachedValue))
-            return cachedValue;
+        if (_cache.TryGetValue(_secretName, out string? cachedValue))
+            if (cachedValue != null)
+                return cachedValue;
 
         try
         {
@@ -65,13 +66,6 @@ internal sealed class KeyVaultApiKeyProvider : IApiKeyProvider
 
         // Trim whitespace and common invisible characters (CR, LF, BOM)
         var trimmed = value.Trim().Trim('\uFEFF', '\u200B', '\u200E', '\u200F');
-
-        // If there are predictable wrappers we don't want (e.g., "Role ... None"), strip them here explicitly.
-        // Example (uncomment and adjust if needed):
-        // if (trimmed.StartsWith("Role ", StringComparison.OrdinalIgnoreCase) && trimmed.EndsWith(" None", StringComparison.OrdinalIgnoreCase))
-        // {
-        //     // custom parsing to extract inner API key
-        // }
 
         return trimmed;
     }

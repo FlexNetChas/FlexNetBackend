@@ -1,6 +1,5 @@
 ﻿using FlexNet.Application.DTOs.Counsellor.Request;
 using FlexNet.Application.UseCases;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 

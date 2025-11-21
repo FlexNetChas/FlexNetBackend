@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using FlexNet.Application.Interfaces;
@@ -34,27 +35,11 @@ public static class DependencyInjection
         services.AddScoped<IJwtGenerator, JwtGenerator>();
         services.AddScoped<IUserDescriptionRepo, UserDescriptionRepository>();
         services.AddScoped<IChatSessionRepo, ChatSessionRepo>();
-        services.AddSingleton<IEncryptionKeyProvider, KeyVaultEncryptionKeyProvider>();
         services.AddScoped<SchoolResponseFormatter>();
         services.AddScoped<IAiClient, GeminiApiClient>();
-        services.AddScoped<IRegularCounselingGenerator, RegularCounselingGenerator>();
-        services.AddScoped<ISchoolAdviceGenerator, SchoolAdviceGenerator>();
-        services.AddScoped<INoResultsGenerator, NoResultsGenerator>();
         services.AddScoped<ISchoolSearchDetector, SchoolSearchDetector>();
+        services.AddScoped<IUserDataRepo, UserDataRepository>();
         
-        services.AddSingleton<IEncryptionService>(sp =>
-        {
-            var keyProvider = sp.GetRequiredService<IEncryptionKeyProvider>();
-            var logger = sp.GetRequiredService<ILogger<EncryptionService>>();
-    
-            // Pre-load the key 
-            var encryptionService = EncryptionService.CreateAsync(keyProvider, logger)
-                .GetAwaiter()
-                .GetResult();  
-    
-            return encryptionService;
-        });
-
         // Add User Context Service
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContextService, ExtractUserIdService>();
@@ -80,14 +65,19 @@ public static class DependencyInjection
     {
         services.AddHttpClient<ISkolverketApiClient, SkolverketApiClient>(client =>
         {
-            client.BaseAddress = new Uri("https://api.skolverket.se/skolenhetsregistret/");
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            client.BaseAddress = new Uri("https://api.skolverket.se/");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/vnd.skolverket.plannededucations.api.v4.hal+json")
+            );
+
+
             client.Timeout = TimeSpan.FromSeconds(30);
         });
     
         services.AddSingleton<SkolverketMapper>();
         services.AddScoped<ISchoolService, SkolverketSchoolService>();
-    
+        services.AddScoped<IProgramService, SkolverketProgramService>();
     }
     private static void ConfigureKeyVault(IServiceCollection services, IConfiguration configuration)
     {

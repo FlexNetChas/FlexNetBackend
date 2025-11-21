@@ -5,7 +5,7 @@ namespace FlexNet.Application.Services.Formatters;
 
 public class SchoolResponseFormatter
 {
-    public string FormatSchoolList(string aiAdvice, List<School> schools)
+    public static string FormatSchoolList(string? aiAdvice, List<School> schools)
     {
         
         var response = new StringBuilder();
@@ -16,13 +16,27 @@ public class SchoolResponseFormatter
             
         // Part 2: School list from Skolverket
         response.AppendLine("---\n");
-        response.AppendLine("**Schools from Skolverkets oficial register:**\n");
+        response.AppendLine("**Schools from Skolverkets official register:**\n");
             
         foreach (var school in schools)
         {
             FormatSchool(response, school);
         }
             
+        return response.ToString();
+    }
+    public static string FormatSchoolListOnly(List<School> schools)
+    {
+        var response = new StringBuilder();
+        
+        response.AppendLine("\n\n---\n");
+        response.AppendLine("**Schools from Skolverkets official register:**\n");
+        
+        foreach (var school in schools)
+        {
+            FormatSchool(response, school);
+        }
+        
         return response.ToString();
     }
     private static void FormatSchool(StringBuilder response, School school)

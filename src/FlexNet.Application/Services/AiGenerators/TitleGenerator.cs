@@ -30,7 +30,7 @@ public class TitleGenerator
             var result = await _aiClient.CallAsync(prompt);
             
             // 3. Handle result
-            if (result.IsSuccess)return Result<string>.Success(CleanTitle(result.Data));
+            if (result.IsSuccess)return Result<string>.Success(CleanTitle(result.Data ?? "Untitled Conversation"));
             
             // 4. Handle API fail
             _logger.LogWarning("failed to generate title: {Error}", result.Error?.Message);

@@ -1,6 +1,7 @@
 using FlexNet.Application.Configuration;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
+using FlexNet.Domain.Entities.Schools;
 using Microsoft.Extensions.Logging;
 
 namespace FlexNet.Application.Services;
@@ -8,6 +9,8 @@ namespace FlexNet.Application.Services;
 public class SchoolSearchDetector : ISchoolSearchDetector
 {
    private readonly SchoolSearchConfiguration _config;
+   private readonly IProgramService _service;
+   private List<SchoolProgram>? _cachedPrograms;
 
    // This might need configuration, if no words matchen in the message then it will not search for any kind of education
    private static readonly string[] SchoolKeywords = new[]
@@ -15,12 +18,14 @@ public class SchoolSearchDetector : ISchoolSearchDetector
       "skola", "school", "gymnasium", "program", "universitet", "university", "folkhögskola", "komvux",
       "vuxenutbildning", "adult education"
    };
-   public SchoolSearchDetector(SchoolSearchConfiguration config, ILogger<SchoolSearchDetector> logger)
+   public SchoolSearchDetector(SchoolSearchConfiguration config, ILogger<SchoolSearchDetector> logger, IProgramService service)
    {
-      _config = config ??  throw new ArgumentNullException(nameof(config));
+       _config = config ??  throw new ArgumentNullException(nameof(config));
+       _service = service ??  throw new ArgumentNullException(nameof(service));
    }
 
-public SchoolRequestInfo? DetectSchoolRequest(string message)
+    public async Task<SchoolRequestInfo?> DetectSchoolRequest(string message,
+            IEnumerable<ConversationMessage>? recentHistory = null)
         {
             // Extract raw message from XML context if present
             var rawMessage = ExtractRawMessage(message);
@@ -31,18 +36,19 @@ public SchoolRequestInfo? DetectSchoolRequest(string message)
             {
                 return null;
             }
+            var municipality = ExtractMunicipality(lowerMessage);
+            var programCodes = await ExtractProgramCodes(lowerMessage);
             
             var request = new SchoolRequestInfo
             {
-                // Extract municipality
-                Municipality = ExtractMunicipality(lowerMessage),
-                // Extract program interests
-                ProgramCodes = ExtractProgramCodes(lowerMessage)
+                Municipality = municipality,
+                ProgramCodes = programCodes
             };
 
             // Validate: Must have at least municipality OR program
             if (request.Municipality != null ||
                 (request.ProgramCodes != null && request.ProgramCodes.Count != 0)) return request;
+            
             return null;
 
         }
@@ -84,21 +90,37 @@ public SchoolRequestInfo? DetectSchoolRequest(string message)
         }
         
         /// Extracts program codes from message using keyword matching.
-        private List<string>? ExtractProgramCodes(string lowerMessage)
+        private async Task<List<string>?> ExtractProgramCodes(string lowerMessage)
         {
+            var programs = await GetProgramsAsync();
             var detectedPrograms = new List<string>();
             
             // Add spaces around message for whole-word matching
             var messageWithSpaces = " " + lowerMessage + " ";
             
-            foreach (var (code, keywords) in _config.ProgramKeywords)
+            foreach (var program in programs)
             {
-                if (keywords.Any(keyword => messageWithSpaces.Contains(keyword)))
+                var programNameLower = program.Name.ToLowerInvariant();
+        
+                if (messageWithSpaces.Contains(programNameLower) || 
+                    programNameLower.Contains(lowerMessage.Trim()))
                 {
-                    detectedPrograms.Add(code);
+                    detectedPrograms.Add(program.Code);
                 }
             }
             
             return detectedPrograms.Count != 0 ? detectedPrograms : null;
+        }
+
+        private async Task<List<SchoolProgram>> GetProgramsAsync()
+        {
+            if (_cachedPrograms != null)
+                return _cachedPrograms;
+
+            var result = await _service.GetAllProgramsAsync();
+            if (!result.IsSuccess || result.Data == null) return [];
+            _cachedPrograms = result.Data.ToList();
+            return _cachedPrograms;
+
         }
 }

@@ -7,7 +7,6 @@ using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
 using FlexNet.Application.Services;
 using FlexNet.Application.Services.Factories;
-using FlexNet.Application.Services.Security;
 using FlexNet.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
