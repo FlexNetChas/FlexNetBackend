@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using FlexNet.Application.Configuration;
 using FlexNet.Application.Interfaces;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
@@ -38,7 +39,8 @@ public static class DependencyInjection
         services.AddScoped<IAiClient, GeminiApiClient>();
         services.AddScoped<ISchoolSearchDetector, SchoolSearchDetector>();
         services.AddScoped<IUserDataRepo, UserDataRepository>();
-        
+        services.AddSingleton<SchoolSearchConfiguration>();
+
         // Add User Context Service
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContextService, ExtractUserIdService>();
