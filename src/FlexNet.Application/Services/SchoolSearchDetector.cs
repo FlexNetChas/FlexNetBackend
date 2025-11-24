@@ -18,7 +18,7 @@ public class SchoolSearchDetector : ISchoolSearchDetector
       "skola","skolor", "school", "gymnasium", "program", "universitet","utbildning", "university", "folkhögskola", "komvux",
       "vuxenutbildning", "adult education"
    };
-   public SchoolSearchDetector(SchoolSearchConfiguration config, ILogger<SchoolSearchDetector> logger, IProgramService service)
+   public SchoolSearchDetector(SchoolSearchConfiguration config,IProgramService service)
    {
        _config = config ??  throw new ArgumentNullException(nameof(config));
        _service = service ??  throw new ArgumentNullException(nameof(service));
