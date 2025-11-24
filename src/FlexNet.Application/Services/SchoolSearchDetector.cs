@@ -15,7 +15,7 @@ public class SchoolSearchDetector : ISchoolSearchDetector
    // This might need configuration, if no words matchen in the message then it will not search for any kind of education
    private static readonly string[] SchoolKeywords = new[]
    {
-      "skola", "school", "gymnasium", "program", "universitet", "university", "folkhögskola", "komvux",
+      "skola","skolor", "school", "gymnasium", "program", "universitet","utbildning", "university", "folkhögskola", "komvux",
       "vuxenutbildning", "adult education"
    };
    public SchoolSearchDetector(SchoolSearchConfiguration config, ILogger<SchoolSearchDetector> logger, IProgramService service)
@@ -101,9 +101,35 @@ public class SchoolSearchDetector : ISchoolSearchDetector
             foreach (var program in programs)
             {
                 var programNameLower = program.Name.ToLowerInvariant();
+                var programCodeLower = program.Code.ToLowerInvariant();
+
+                bool matched = false;
         
-                if (messageWithSpaces.Contains(programNameLower) || 
-                    programNameLower.Contains(lowerMessage.Trim()))
+                // 1. Check if program CODE appears (e.g., "BA25", "ba25", "ba25-programmet")
+                if (messageWithSpaces.Contains(" " + programCodeLower + " ") ||
+                    messageWithSpaces.Contains(" " + programCodeLower + "-") ||
+                    messageWithSpaces.Contains("-" + programCodeLower + " ") ||
+                    messageWithSpaces.Contains("(" + programCodeLower + ")"))
+                {
+                    matched = true;
+                }
+        
+                // 2. Check if program NAME appears (e.g., "teknikprogrammet", "bygg- och anläggningsprogrammet")
+                else if (messageWithSpaces.Contains(programNameLower))
+                {
+                    matched = true;
+                }
+        
+                // 3. Check for partial name matches (e.g., "teknik" → "Teknikprogrammet")
+                // Only for longer, unique program names
+                else if (programNameLower.Length > 10 && 
+                         lowerMessage.Contains(programNameLower.Replace("programmet", "").Trim()) &&
+                         lowerMessage.Trim().Length > 5)
+                {
+                    matched = true;
+                }
+        
+                if (matched)
                 {
                     detectedPrograms.Add(program.Code);
                 }

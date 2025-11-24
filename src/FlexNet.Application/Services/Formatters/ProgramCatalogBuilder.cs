@@ -50,9 +50,7 @@ public class ProgramCatalogBuilder
             }
 
             var programs = programsResult.Data.ToList();
-            
-            _logger.LogInformation("Building program catalog with {Count} programs", programs.Count);
-            
+
             var xml = BuildXml(programs);
             
             return Result<string>.Success(xml);

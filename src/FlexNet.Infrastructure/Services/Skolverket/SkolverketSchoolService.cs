@@ -1,4 +1,5 @@
 using System.Globalization;
+using FlexNet.Application.Configuration;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models.Records;
 using FlexNet.Domain.Entities.Schools;
@@ -14,6 +15,7 @@ public class SkolverketSchoolService : ISchoolService
     private readonly ILogger<SkolverketSchoolService> _logger;
     private readonly SkolverketMapper _mapper;
     private readonly IMemoryCache _cache;
+    private readonly SchoolSearchConfiguration _config;
 
     private const string CacheKey = "skolverket_all_schools";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromDays(180);
@@ -23,12 +25,14 @@ public class SkolverketSchoolService : ISchoolService
         ISkolverketApiClient apiClient,
         ILogger<SkolverketSchoolService> logger,
         IMemoryCache memoryCache,
-        SkolverketMapper mapper)
+        SkolverketMapper mapper,
+        SchoolSearchConfiguration config)
     {
         _apiClient = apiClient ??  throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ??  throw new ArgumentNullException(nameof(logger));
         _cache = memoryCache ??  throw new ArgumentNullException(nameof(memoryCache));
         _mapper = mapper ??  throw new ArgumentNullException(nameof(mapper));
+        _config = config ?? throw new ArgumentNullException(nameof(config));
     }
 
     public async Task<Result<IEnumerable<School>>> SearchSchoolsAsync(
@@ -169,10 +173,9 @@ public class SkolverketSchoolService : ISchoolService
                 _logger.LogWarning("  - {Name} ({Code}) has null Programs", school.Name, school.SchoolUnitCode);
             }
         } 
-        var elapsed = DateTime.UtcNow - startTime;
         
         _cache.Set(CacheKey, validSchools, CacheDuration);
-        
+        _config.UpdateFromSchools(validSchools); 
         return validSchools;
     }
 

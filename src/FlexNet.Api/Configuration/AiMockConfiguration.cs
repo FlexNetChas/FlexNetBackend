@@ -30,8 +30,8 @@ namespace FlexNet.Api.Configuration
 
         private static void RegisterMockClient(IServiceCollection services, IConfiguration configuration)
         {
-            var minDelay = configuration.GetValue<int>("MockAi:MinDelayMs", 100);
-            var maxDelay = configuration.GetValue<int>("MockAi:MaxDelayMs", 500);
+            var minDelay = configuration.GetValue("MockAi:MinDelayMs", 100);
+            var maxDelay = configuration.GetValue("MockAi:MaxDelayMs", 500);
             
             services.AddScoped<IAiClient>(provider =>
             {
