@@ -89,6 +89,7 @@ public class SkolverketProgramService : IProgramService
     {
         try
         {
+        
             _cache.Remove(CacheKey);
         
             var programs = await LoadProgramsFromApiAsync(cancellationToken);
@@ -121,7 +122,6 @@ public class SkolverketProgramService : IProgramService
 private async Task<List<SchoolProgram>> LoadProgramsFromApiAsync(
     CancellationToken cancellationToken = default)
 {
-    var startTime = DateTime.UtcNow;
 
     var response = await _apiClient.GetProgramsAsync(cancellationToken);
     

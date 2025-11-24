@@ -1,11 +1,11 @@
 using System.Net.Http.Headers;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using FlexNet.Application.Configuration;
 using FlexNet.Application.Interfaces;
 using FlexNet.Application.Interfaces.IRepositories;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Services;
-using FlexNet.Application.Services.AiGenerators;
 using FlexNet.Application.Services.Formatters;
 using FlexNet.Infrastructure.Data;
 using FlexNet.Infrastructure.Interfaces;
@@ -39,7 +39,8 @@ public static class DependencyInjection
         services.AddScoped<IAiClient, GeminiApiClient>();
         services.AddScoped<ISchoolSearchDetector, SchoolSearchDetector>();
         services.AddScoped<IUserDataRepo, UserDataRepository>();
-        
+        services.AddSingleton<SchoolSearchConfiguration>();
+
         // Add User Context Service
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContextService, ExtractUserIdService>();
@@ -70,6 +71,7 @@ public static class DependencyInjection
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("*/*")
             );
+
             client.DefaultRequestHeaders.Add("User-Agent", "FlexNet/1.0");
             client.Timeout = TimeSpan.FromSeconds(30);
         });
