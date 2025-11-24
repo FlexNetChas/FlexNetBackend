@@ -50,7 +50,6 @@ public class SkolverketApiClient : ISkolverketApiClient
         try
         {
             var endpoint = string.Format(DetailEndpointTemplate, schoolUnitCode);
-            _logger.LogDebug("Fetching details for school {Code}", schoolUnitCode);
 
             var response = await _client.GetFromJsonAsync<SkolverketDetailResponse>(endpoint, cancellationToken);
 

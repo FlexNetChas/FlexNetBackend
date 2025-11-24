@@ -63,20 +63,8 @@ public class PromptEnricher : IPromptEnricher
         sb.AppendLine("  </schools>");
         sb.AppendLine("</school_search_results>");
         sb.AppendLine();
-        
-        // Instructions for AI
-        sb.AppendLine("<guidance_instructions>");
-        sb.AppendLine("Skriv 3-5 meningar på svenska som:");
-        sb.AppendLine("1. Bekräftar elevens intresse");
-        sb.AppendLine("2. Refererar till SPECIFIKA skolor och deras program");
-        sb.AppendLine("3. Uppmuntrar att besöka webbsidor (nämn specifika URL:er)");
-        sb.AppendLine("4. Föreslår att kontakta skolor direkt (nämn telefonnummer eller e-post)");
-        sb.AppendLine("5. Erbjuder hjälp med fler frågor");
-        sb.AppendLine();
-        sb.AppendLine("Var varm, personlig och specifik. Använd informationen om skolorna ovan.");
-        sb.AppendLine("Skriv ENDAST rådgivningstexten (skolistan visas separat).");
-        sb.AppendLine("</guidance_instructions>");
-        
+        sb.AppendLine("<note>När skolor finns i sökresultatet, referera till dem med namn och kontaktinfo.</note>"); 
+
         return sb.ToString();
     }
     
@@ -109,15 +97,6 @@ public class PromptEnricher : IPromptEnricher
         sb.AppendLine("  </search_criteria>");
         sb.AppendLine("</search_results>");
         sb.AppendLine();
-        
-        sb.AppendLine("<guidance_instructions>");
-        sb.AppendLine("Hjälp eleven på svenska genom att:");
-        sb.AppendLine("1. Föreslå närliggande kommuner");
-        sb.AppendLine("2. Fråga om de kan överväga relaterade program");
-        sb.AppendLine("3. Uppmuntra dem att specificera sina sökkriterier");
-        sb.AppendLine();
-        sb.AppendLine("Var stödjande och konstruktiv.");
-        sb.AppendLine("</guidance_instructions>");
         
         return sb.ToString();
     }

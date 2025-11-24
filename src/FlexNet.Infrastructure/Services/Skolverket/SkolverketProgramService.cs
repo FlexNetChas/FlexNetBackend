@@ -71,7 +71,6 @@ public class SkolverketProgramService : IProgramService
                 return Result<SchoolProgram>.Failure(error);
             }
         
-            _logger.LogInformation("Found program {Code}", programCode);
             return Result<SchoolProgram>.Success(program);
         }
         catch (Exception ex)
@@ -90,13 +89,10 @@ public class SkolverketProgramService : IProgramService
     {
         try
         {
-            _logger.LogInformation("Manually refreshing program cache");
-        
             _cache.Remove(CacheKey);
         
             var programs = await LoadProgramsFromApiAsync(cancellationToken);
         
-            _logger.LogInformation("Cache refreshed with {Count} programs", programs.Count);
             return Result<int>.Success(programs.Count);
         }
         catch (Exception ex)
@@ -116,11 +112,9 @@ public class SkolverketProgramService : IProgramService
 {
     if (_cache.TryGetValue(CacheKey, out List<SchoolProgram>? cached) && cached != null)
     {
-        _logger.LogInformation("Returning {Count} programs from cache", cached.Count);
         return cached;
     }
     
-    _logger.LogInformation("Cache miss - loading programs from API");
     return await LoadProgramsFromApiAsync(cancellationToken);
 }
 
@@ -128,7 +122,6 @@ private async Task<List<SchoolProgram>> LoadProgramsFromApiAsync(
     CancellationToken cancellationToken = default)
 {
     var startTime = DateTime.UtcNow;
-    _logger.LogInformation("Loading all gymnasium programs from Skolverket API");
 
     var response = await _apiClient.GetProgramsAsync(cancellationToken);
     
@@ -144,14 +137,7 @@ private async Task<List<SchoolProgram>> LoadProgramsFromApiAsync(
         .Cast<SchoolProgram>()
         .ToList();
 
-    var elapsed = DateTime.UtcNow - startTime;
-    _logger.LogInformation(
-        "Loaded {Count} gymnasium programs in {Seconds:F1} seconds",
-        programs.Count,
-        elapsed.TotalSeconds);
-    
     _cache.Set(CacheKey, programs, CacheDuration);
-    _logger.LogInformation("Programs cached for {Days} days", CacheDuration.TotalDays);
     
     return programs;
 }

@@ -68,10 +68,9 @@ public static class DependencyInjection
             client.BaseAddress = new Uri("https://api.skolverket.se/");
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/vnd.skolverket.plannededucations.api.v4.hal+json")
+                new MediaTypeWithQualityHeaderValue("*/*")
             );
-
-
+            client.DefaultRequestHeaders.Add("User-Agent", "FlexNet/1.0");
             client.Timeout = TimeSpan.FromSeconds(30);
         });
     
