@@ -126,7 +126,6 @@ public class SkolverketMapper
             if(ProgramNames.TryGetValue(normalized, out var normalizedName))
                 return normalizedName;
         }
-        _logger.LogWarning("Unknown program code: {Code}", code);
         return $"Program {code}";
     }
 

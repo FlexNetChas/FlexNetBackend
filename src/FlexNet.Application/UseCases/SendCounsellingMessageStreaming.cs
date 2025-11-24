@@ -62,6 +62,9 @@ public class SendCounsellingMessageStreaming
             fullResponse.ToString(),
             context.UserContext,
             context.UserId);
+        
+        var sessionIdResult = Result<string>.Success($"SESSION_ID:{context.Session.Id}");
+        yield return sessionIdResult;
     }
     
 }

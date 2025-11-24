@@ -82,7 +82,6 @@ public class GeminiApiClient: IAiClient
                 _logger.LogDebug("Streaming chunk {Count}, lenght: {Length}", chunkCount, chunkText.Length);
                 
                 yield return Result<string>.Success(chunkText);
-                _logger.LogInformation("Streaming completed, total chunks: {Count}", chunkCount);
             }
         }
         finally

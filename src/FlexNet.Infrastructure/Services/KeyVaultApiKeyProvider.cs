@@ -26,7 +26,6 @@ internal sealed class KeyVaultApiKeyProvider : IApiKeyProvider
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         _secretName = config["KeyVault:SecretName"];
-        _logger.LogInformation("Resolved KEY_VAULT_SECRET_NAME: {SecretName}", _secretName ?? "<null>");
     }
 
     public async Task<string> GetApiKeyAsync(CancellationToken cancellationToken = default)
@@ -43,8 +42,6 @@ internal sealed class KeyVaultApiKeyProvider : IApiKeyProvider
             Response<KeyVaultSecret> response = await _secretClient.GetSecretAsync(_secretName, cancellationToken: cancellationToken);
             var raw = response.Value?.Value ?? string.Empty;
             var normalized = NormalizeSecret(raw);
-
-            _logger.LogInformation("Secret name={SecretName} rawLen={RawLen} normalizedLen={NormLen}", _secretName, raw.Length, normalized.Length);
 
             if (string.IsNullOrWhiteSpace(normalized))
                 throw new InvalidOperationException("API key retrieved from Key Vault is empty after normalization.");
