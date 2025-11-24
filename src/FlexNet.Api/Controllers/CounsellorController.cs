@@ -37,7 +37,8 @@ namespace FlexNet.Api.Controllers
             Response.Headers.Append("Connection", "keep-alive");
 
             var request = new SendMessageRequestDto(message, chatSessionId);
-
+            int? sessionId = chatSessionId;
+            
             try
             {
                 // 2. Call your use case (need to create streaming version)
@@ -45,6 +46,11 @@ namespace FlexNet.Api.Controllers
                 {
                     if (result.IsSuccess)
                     {
+                        if (result.Data?.StartsWith("SESSION_ID:") == true)
+                        {
+                            sessionId = int.Parse(result.Data.Replace("SESSION_ID:", ""));
+                            continue;
+                        }
                         // 3. Write SSE data event
                         await Response.WriteAsync($"event: data\n");
                         await Response.WriteAsync($"data: {result.Data}\n\n");
@@ -61,7 +67,7 @@ namespace FlexNet.Api.Controllers
                 }
                 // 5. Write done event
                 await Response.WriteAsync($"event: done\n");
-                await Response.WriteAsync($"data: {{}}\n\n");
+                await Response.WriteAsync($"data: {{\"sessionId\": {sessionId}}}\n\n"); 
                 await Response.Body.FlushAsync();
             }
             catch (Exception ex)
