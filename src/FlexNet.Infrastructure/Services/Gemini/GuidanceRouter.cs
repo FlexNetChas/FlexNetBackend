@@ -2,7 +2,6 @@ using FlexNet.Application.DTOs.AI;
 using FlexNet.Application.Interfaces.IServices;
 using FlexNet.Application.Models;
 using FlexNet.Application.Models.Records;
-using FlexNet.Application.Services;
 using FlexNet.Application.Services.Formatters;
 using FlexNet.Domain.Entities.Schools;
 using FlexNet.Infrastructure.Interfaces;
@@ -52,6 +51,7 @@ public class GuidanceRouter : IGuidanceRouter
             if (schools.Count > 0)
             {
                 var enrichedPrompt = _enricher.EnrichWithSchools(xmlPrompt, schools);
+                _logger.LogDebug("Enriched prompt length: {Length}", enrichedPrompt.Length);
                 var result = await _aiClient.CallAsync(enrichedPrompt);
                 if (!result.IsSuccess)
                 {
@@ -99,7 +99,6 @@ public class GuidanceRouter : IGuidanceRouter
             } 
             yield break;
         }
-     
         var schools = await SearchSchools(schoolRequest);
         if (schools.Count > 0)
         {
@@ -108,29 +107,29 @@ public class GuidanceRouter : IGuidanceRouter
 
             await foreach (var chunk in _aiClient.CallStreamingAsync(enrichedPrompt))
             {
-                if (chunk.IsSuccess)
-                {
-                    hadSuccessfulChunk = true;
-                    yield return chunk;
-                }
-                else
-                {
-                    _logger.LogWarning("Streaming error: {Error}", chunk.Error?.Message);
-                    if (!hadSuccessfulChunk)
-                    {
-                        yield return Result<string>.Success(GetSchoolAdviceFallback());
-                    }
-                    yield break;
-                }
+                 if (chunk.IsSuccess)
+                 {
+                     hadSuccessfulChunk = true;
+                         yield return chunk;
+                 }
+                 else
+                 {
+                     _logger.LogWarning("Streaming error: {Error}", chunk.Error?.Message);
+                     if (!hadSuccessfulChunk)
+                     {
+                          yield return Result<string>.Success(GetSchoolAdviceFallback());
+                     }
+                     yield break;
+                 }
             }
 
             if (!hadSuccessfulChunk) yield break;
             var schoolList = SchoolResponseFormatter.FormatSchoolListOnly(schools);
-            yield return Result<string>.Success(schoolList);
+             yield return Result<string>.Success(schoolList);
 
             yield break; 
         }
-        
+ 
         var noResultsPrompt = _enricher.EnrichWithNoResults(xmlPrompt, schoolRequest);
         await foreach (var chunk in _aiClient.CallStreamingAsync(noResultsPrompt))
         {
@@ -193,7 +192,6 @@ public class GuidanceRouter : IGuidanceRouter
         if (result.IsSuccess && !string.IsNullOrEmpty(result.Data))
         {
             _cachedProgramCatalog = result.Data;
-            _logger.LogInformation("Program catalog loaded and cached");
             return _cachedProgramCatalog;
         }
 
